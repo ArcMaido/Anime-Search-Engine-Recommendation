@@ -158,6 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final detailAnime = detail ?? anime;
     final categories = detailAnime.genres?.map((genre) => genre.name).toList() ?? [];
 
+    // Save the interaction to the database
     if (categories.isNotEmpty) {
       await AppDatabase.instance.saveAnimeInteraction(
         userId: widget.user.id,
@@ -165,6 +166,22 @@ class _HomeScreenState extends State<HomeScreen> {
         animeTitle: detailAnime.title,
         categories: categories,
       );
+
+      // Update recommendations to show anime from the same categories (sorted A-Z)
+      final categoryRecommendations =
+          await RecommendationService.getRecommendationsByCategories(
+        categories,
+        limit: 30,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _categoryRecommendations = categoryRecommendations;
+        _recommendationPage = 0;
+      });
     }
 
     if (!mounted) {
@@ -176,8 +193,6 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (context) => DetailScreen(anime: detailAnime),
       ),
     );
-
-    await _loadCategoryRecommendations();
   }
 
   Future<void> _openRecommendationDetailAndRecord(RecommendationAnime anime) async {
@@ -196,11 +211,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => DetailScreen(anime: anime.toAnime()),
+        builder: (context) => DetailScreen(
+          anime: anime.toAnime(),
+          loadFromApi: true,
+        ),
       ),
     );
-
-    await _loadCategoryRecommendations();
   }
 
   Future<void> _showCategorySelectionPrompt({
@@ -717,22 +733,42 @@ class _RecommendationCard extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                _miniStatChip(
+                                  context,
+                                  Icons.play_circle_outline,
+                                  anime.episodes != null
+                                      ? '${anime.episodes} eps'
+                                      : 'Episodes TBA',
+                                ),
+                                _miniStatChip(
+                                  context,
+                                  Icons.auto_awesome,
+                                  anime.status ?? 'Status TBA',
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
                             Text(
                               anime.synopsis,
-                              maxLines: 2,
+                              maxLines: 3,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                color: colorScheme.onSurface.withOpacity(0.72),
-                                fontSize: 11,
+                                color: colorScheme.onSurface.withOpacity(0.78),
+                                fontSize: 12,
+                                height: 1.45,
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 10),
                             Text(
                               'Matched ${anime.matchCount} categories',
                               style: TextStyle(
                                 color: colorScheme.primary,
                                 fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ],
@@ -777,22 +813,42 @@ class _RecommendationCard extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            Text(
-                              anime.synopsis,
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: colorScheme.onSurface.withOpacity(0.72),
-                                fontSize: 12,
-                              ),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                _miniStatChip(
+                                  context,
+                                  Icons.play_circle_outline,
+                                  anime.episodes != null
+                                      ? '${anime.episodes} eps'
+                                      : 'Episodes TBA',
+                                ),
+                                _miniStatChip(
+                                  context,
+                                  Icons.auto_awesome,
+                                  anime.status ?? 'Status TBA',
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 10),
+                            Text(
+                              anime.synopsis,
+                              maxLines: 4,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: colorScheme.onSurface.withOpacity(0.78),
+                                fontSize: 12,
+                                height: 1.45,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
                             Text(
                               'Matched ${anime.matchCount} categories',
                               style: TextStyle(
                                 color: colorScheme.primary,
                                 fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ],
@@ -802,6 +858,34 @@ class _RecommendationCard extends StatelessWidget {
                   ),
                 ),
         ),
+      ),
+    );
+  }
+
+  Widget _miniStatChip(BuildContext context, IconData icon, String label) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: colorScheme.primaryContainer.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: colorScheme.primary.withOpacity(0.25)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: colorScheme.primary),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: colorScheme.onSurface,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

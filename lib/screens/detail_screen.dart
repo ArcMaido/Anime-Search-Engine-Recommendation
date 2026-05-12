@@ -35,7 +35,13 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Future<void> _loadAnimeDetailsIfNeeded() async {
-    if (!widget.loadFromApi) {
+    final needsApiRefresh = widget.loadFromApi ||
+        _anime.episodes == null ||
+        _anime.status == null ||
+        _anime.synopsis == null ||
+        _anime.synopsis!.trim().isEmpty;
+
+    if (!needsApiRefresh) {
       return;
     }
 
@@ -185,8 +191,9 @@ class _DetailScreenState extends State<DetailScreen> {
                     _anime.title,
                     style: TextStyle(
                       color: colorScheme.onBackground,
-                      fontSize: 26,
+                      fontSize: 28,
                       fontWeight: FontWeight.bold,
+                      height: 1.15,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -222,6 +229,53 @@ class _DetailScreenState extends State<DetailScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 20),
+
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: colorScheme.outline),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Quick Facts',
+                          style: TextStyle(
+                            color: colorScheme.onBackground,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildStatTile(
+                                context: context,
+                                label: 'Episodes',
+                                value: _anime.episodes?.toString() ?? 'TBA',
+                                icon: Icons.play_circle_outline,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildStatTile(
+                                context: context,
+                                label: 'Status',
+                                value: _anime.status ?? 'TBA',
+                                icon: Icons.auto_awesome,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
                   const SizedBox(height: 20),
 
                   // Episodes and Status
@@ -303,30 +357,31 @@ class _DetailScreenState extends State<DetailScreen> {
                     ),
 
                   // Synopsis
-                  if (_anime.synopsis != null && _anime.synopsis!.isNotEmpty)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Synopsis',
-                          style: TextStyle(
-                            color: colorScheme.onBackground,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Synopsis',
+                        style: TextStyle(
+                          color: colorScheme.onBackground,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          _anime.synopsis!,
-                          style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
-                            fontSize: 15,
-                            height: 1.75,
-                          ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        (_anime.synopsis != null && _anime.synopsis!.isNotEmpty)
+                            ? _anime.synopsis!
+                            : 'Synopsis is not available for this anime yet.',
+                        style: TextStyle(
+                          color: colorScheme.onSurfaceVariant,
+                          fontSize: 15,
+                          height: 1.75,
                         ),
-                        const SizedBox(height: 24),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
 
                   // Trailer
                   if (_anime.trailer != null &&
@@ -460,6 +515,48 @@ class _DetailScreenState extends State<DetailScreen> {
               color: colorScheme.primary,
               fontSize: 14,
               fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatTile({
+    required BuildContext context,
+    required String label,
+    required String value,
+    required IconData icon,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colorScheme.background,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: colorScheme.primary, size: 20),
+          const SizedBox(height: 12),
+          Text(
+            label,
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: colorScheme.onBackground,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],

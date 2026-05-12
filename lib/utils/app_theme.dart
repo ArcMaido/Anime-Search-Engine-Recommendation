@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color background = Color(0xFF0F172A);
-  static const Color cardBackground = Color(0xFF18253D);
-  static const Color primaryPurple = Color(0xFF8B5CF6);
-  static const Color accentCyan = Color(0xFF22D3EE);
-  static const Color whiteText = Color(0xFFFFFFFF);
+  static const Color background = Color(0xFF081120);
+  static const Color cardBackground = Color(0xFF111C33);
+  static const Color primaryPurple = Color(0xFF7C3AED);
+  static const Color accentCyan = Color(0xFF38BDF8);
+  static const Color whiteText = Color(0xFFF8FAFC);
   static const Color greyText = Color(0xFFCBD5E1);
-  static const Color darkGrey = Color(0xFF334155);
+  static const Color darkGrey = Color(0xFF263448);
 
-  static const Color lightBackground = Color(0xFFF8FAFC);
+  static const Color lightBackground = Color(0xFFF4F7FB);
   static const Color lightCardBackground = Color(0xFFFFFFFF);
   static const Color lightPrimary = Color(0xFF4F46E5);
   static const Color lightAccent = Color(0xFF0EA5E9);
   static const Color lightText = Color(0xFF0F172A);
   static const Color lightMuted = Color(0xFF64748B);
-  static const Color lightBorder = Color(0xFFE2E8F0);
+  static const Color lightBorder = Color(0xFFD8E0EA);
 
   static ThemeData darkTheme() {
     return ThemeData(
@@ -30,29 +30,58 @@ class AppTheme {
         secondary: accentCyan,
         surface: cardBackground,
         onSurface: whiteText,
+        surfaceTint: primaryPurple,
       ),
       scaffoldBackgroundColor: background,
       appBarTheme: const AppBarTheme(
         backgroundColor: background,
+        foregroundColor: whiteText,
         elevation: 0,
         centerTitle: true,
       ),
-      // Card theming - keep default types to ensure SDK compatibility
-      // Custom card styling applied via Card widgets individually where needed.
+      cardTheme: CardThemeData(
+        color: cardBackground,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      ),
+      dividerTheme: const DividerThemeData(color: darkGrey, thickness: 1),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: primaryPurple,
+          foregroundColor: whiteText,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: whiteText,
+          side: const BorderSide(color: darkGrey),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: cardBackground,
+        contentTextStyle: const TextStyle(color: whiteText),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        behavior: SnackBarBehavior.floating,
+      ),
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
           color: whiteText,
-          fontSize: 28,
+          fontSize: 30,
           fontWeight: FontWeight.bold,
         ),
         headlineMedium: TextStyle(
           color: whiteText,
-          fontSize: 24,
+          fontSize: 25,
           fontWeight: FontWeight.bold,
         ),
         titleLarge: TextStyle(
           color: whiteText,
-          fontSize: 18,
+          fontSize: 19,
           fontWeight: FontWeight.w600,
         ),
         titleMedium: TextStyle(
@@ -86,7 +115,13 @@ class AppTheme {
         ),
         hintStyle: const TextStyle(color: greyText),
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: cardBackground,
+        side: BorderSide(color: whiteText.withOpacity(0.12)),
+        labelStyle: const TextStyle(color: whiteText),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
       ),
     );
   }
@@ -104,6 +139,7 @@ class AppTheme {
         secondary: lightAccent,
         surface: lightCardBackground,
         onSurface: lightText,
+        surfaceTint: lightPrimary,
       ),
       scaffoldBackgroundColor: lightBackground,
       appBarTheme: const AppBarTheme(
@@ -112,20 +148,49 @@ class AppTheme {
         elevation: 0,
         centerTitle: true,
       ),
+      cardTheme: CardThemeData(
+        color: lightCardBackground,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      ),
+      dividerTheme: const DividerThemeData(color: lightBorder, thickness: 1),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: lightPrimary,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: lightText,
+          side: const BorderSide(color: lightBorder),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: lightCardBackground,
+        contentTextStyle: const TextStyle(color: lightText),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        behavior: SnackBarBehavior.floating,
+      ),
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
           color: lightText,
-          fontSize: 28,
+          fontSize: 30,
           fontWeight: FontWeight.bold,
         ),
         headlineMedium: TextStyle(
           color: lightText,
-          fontSize: 24,
+          fontSize: 25,
           fontWeight: FontWeight.bold,
         ),
         titleLarge: TextStyle(
           color: lightText,
-          fontSize: 18,
+          fontSize: 19,
           fontWeight: FontWeight.w600,
         ),
         titleMedium: TextStyle(
@@ -159,7 +224,7 @@ class AppTheme {
         ),
         hintStyle: const TextStyle(color: lightMuted),
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: lightCardBackground,

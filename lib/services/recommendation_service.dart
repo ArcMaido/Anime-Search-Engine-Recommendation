@@ -102,4 +102,41 @@ class RecommendationService {
       }
     });
   }
+
+  /// Get recommendations by matching categories, sorted A-Z by title
+  static Future<List<RecommendationAnime>> getRecommendationsByCategories(
+    List<String> targetCategories, {
+    int limit = 30,
+  }) async {
+    if (targetCategories.isEmpty) {
+      return [];
+    }
+
+    final db = await AppDatabase.instance.database;
+    final rows = await db.query(AppDatabase.animeTable);
+
+    final normalizedTargetCategories = targetCategories
+        .map((category) => category.trim().toLowerCase())
+        .toSet();
+
+    final matchingAnime = rows
+        .map((row) => RecommendationAnime.fromMap(row))
+        .where((anime) {
+          final animeCategories = anime.categories
+              .map((cat) => cat.trim().toLowerCase())
+              .toSet();
+          return animeCategories.any(
+            (cat) => normalizedTargetCategories.contains(cat),
+          );
+        })
+        .toList()
+      ..sort((a, b) => a.title.compareTo(b.title)); // Sort A-Z
+
+    final limitedAnime = matchingAnime.take(limit).toList();
+    final hydratedAnime = await Future.wait(
+      limitedAnime.map(_hydrateRecommendation),
+    );
+
+    return hydratedAnime.whereType<RecommendationAnime>().toList();
+  }
 }

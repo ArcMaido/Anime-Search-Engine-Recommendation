@@ -19,45 +19,66 @@ class EmptyState extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withOpacity(0.45),
-                shape: BoxShape.circle,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: colorScheme.outline.withOpacity(0.7)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
               ),
-              child: Icon(
-                icon,
-                size: 44,
-                color: colorScheme.primary,
-              ),
-            ),
-            const SizedBox(height: 22),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: colorScheme.onSurface,
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            if (subtitle != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 12.0),
-                child: Text(
-                  subtitle!,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: colorScheme.onSurface.withOpacity(0.7),
-                    fontSize: 14,
-                    height: 1.4,
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      colorScheme.primaryContainer.withOpacity(0.8),
+                      colorScheme.secondaryContainer.withOpacity(0.7),
+                    ],
                   ),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  size: 44,
+                  color: colorScheme.primary,
                 ),
               ),
-          ],
+              const SizedBox(height: 22),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: colorScheme.onSurface,
+                  fontSize: 21,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              if (subtitle != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12.0),
+                  child: Text(
+                    subtitle!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: colorScheme.onSurface.withOpacity(0.72),
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

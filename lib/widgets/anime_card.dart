@@ -18,40 +18,31 @@ class AnimeCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: Card(
+      child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
-        ),
-        color: colorScheme.surface,
-        elevation: 0,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: colorScheme.outline,
-              width: 1,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: colorScheme.outline.withOpacity(0.7)),
+          color: colorScheme.surface,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 24,
+              offset: const Offset(0, 12),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Anime Image
               SizedBox(
-                width: 100,
-                height: 140,
+                width: 112,
+                height: 158,
                 child: ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(22),
-                    bottomLeft: Radius.circular(22),
-                  ),
+                  borderRadius: BorderRadius.circular(0),
                   child: anime.image != null && anime.image!.isNotEmpty
                       ? CachedNetworkImage(
                           imageUrl: anime.image!,
@@ -88,7 +79,7 @@ class AnimeCard extends StatelessWidget {
               // Content
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(14.0),
+                  padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -99,81 +90,57 @@ class AnimeCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: colorScheme.onSurface,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      // Rating and Episodes Row
-                      Row(
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
                         children: [
-                          // Rating
-                          if (anime.score != null && anime.score! > 0)
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.star,
-                                  color: colorScheme.secondary,
-                                  size: 14,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  anime.score!.toStringAsFixed(1),
-                                  style: TextStyle(
-                                    color: colorScheme.secondary,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          const SizedBox(width: 12),
-                          // Episodes
-                          if (anime.episodes != null && anime.episodes! > 0)
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.play_circle_outline,
-                                  color: colorScheme.primary,
-                                  size: 14,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${anime.episodes} ep',
-                                  style: TextStyle(
-                                    color: colorScheme.primary,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
+                          _buildMetaChip(
+                            context,
+                            Icons.star_rounded,
+                            anime.score != null && anime.score! > 0
+                                ? anime.score!.toStringAsFixed(1)
+                                : 'No score',
+                          ),
+                          _buildMetaChip(
+                            context,
+                            Icons.play_circle_outline,
+                            anime.episodes != null && anime.episodes! > 0
+                                ? '${anime.episodes} eps'
+                                : 'Episodes TBA',
+                          ),
+                          _buildMetaChip(
+                            context,
+                            Icons.auto_awesome,
+                            anime.status ?? 'Status TBA',
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      // Status
-                      if (anime.status != null && anime.status!.isNotEmpty)
-                        Text(
-                          anime.status!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: colorScheme.onSurface.withOpacity(0.7),
-                            fontSize: 12,
-                          ),
-                        ),
-                      const SizedBox(height: 8),
-                      // Synopsis Preview
+                      const SizedBox(height: 12),
                       if (anime.synopsis != null && anime.synopsis!.isNotEmpty)
                         Text(
                           anime.synopsis!,
-                          maxLines: 2,
+                          maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: colorScheme.onSurface.withOpacity(0.7),
-                            fontSize: 11,
+                            color: colorScheme.onSurface.withOpacity(0.72),
+                            fontSize: 12,
+                            height: 1.45,
                           ),
                         ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Tap to open details',
+                        style: TextStyle(
+                          color: colorScheme.primary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -181,6 +148,34 @@ class AnimeCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMetaChip(BuildContext context, IconData icon, String label) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: colorScheme.primaryContainer.withOpacity(0.25),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: colorScheme.primary.withOpacity(0.18)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: colorScheme.primary),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: colorScheme.onSurface,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

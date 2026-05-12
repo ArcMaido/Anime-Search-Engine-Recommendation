@@ -36,23 +36,23 @@ class _AnimeSearchBarState extends State<AnimeSearchBar> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
       child: Container(
         decoration: BoxDecoration(
           color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: colorScheme.outline),
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: colorScheme.outline.withOpacity(0.7)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 22,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
         child: TextField(
           controller: _controller,
-          style: TextStyle(color: colorScheme.onSurface),
+          style: TextStyle(color: colorScheme.onSurface, fontSize: 15),
           onChanged: (value) {
             setState(() {});
             widget.onChanged?.call(value);
@@ -61,14 +61,14 @@ class _AnimeSearchBarState extends State<AnimeSearchBar> {
             widget.onSearch(value);
           },
           decoration: InputDecoration(
-            hintText: 'Search anime by title...',
+            hintText: 'Search anime, studios, or genres',
             prefixIcon: Icon(
-              Icons.search,
+              Icons.search_rounded,
               color: colorScheme.primary,
             ),
             suffixIcon: widget.isLoading
                 ? Padding(
-                    padding: const EdgeInsets.all(12.0),
+                    padding: const EdgeInsets.all(14.0),
                     child: SizedBox(
                       width: 18,
                       height: 18,
@@ -83,7 +83,7 @@ class _AnimeSearchBarState extends State<AnimeSearchBar> {
                 : _controller.text.isNotEmpty
                     ? IconButton(
                         icon: Icon(
-                          Icons.clear,
+                          Icons.close_rounded,
                           color: colorScheme.primary,
                         ),
                         onPressed: () {
