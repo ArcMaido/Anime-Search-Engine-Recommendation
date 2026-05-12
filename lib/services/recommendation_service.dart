@@ -60,7 +60,9 @@ class RecommendationService {
       limitedRecommendations.map(_hydrateRecommendation),
     );
 
-    return hydratedRecommendations.whereType<RecommendationAnime>().toList();
+    return _sortAlphabetically(
+      hydratedRecommendations.whereType<RecommendationAnime>().toList(),
+    );
   }
 
   static Future<RecommendationAnime?> _hydrateRecommendation(
@@ -137,6 +139,27 @@ class RecommendationService {
       limitedAnime.map(_hydrateRecommendation),
     );
 
-    return hydratedAnime.whereType<RecommendationAnime>().toList();
+    return _sortAlphabetically(
+      hydratedAnime.whereType<RecommendationAnime>().toList(),
+    );
+  }
+
+  static List<RecommendationAnime> _sortAlphabetically(
+    List<RecommendationAnime> animeList,
+  ) {
+    final sortedList = List<RecommendationAnime>.from(animeList);
+    sortedList.sort((left, right) {
+      final titleCompare = left.title
+          .trim()
+          .toLowerCase()
+          .compareTo(right.title.trim().toLowerCase());
+
+      if (titleCompare != 0) {
+        return titleCompare;
+      }
+
+      return left.title.compareTo(right.title);
+    });
+    return sortedList;
   }
 }
