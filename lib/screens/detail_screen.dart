@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/anime_model.dart';
+import '../services/anime_service.dart';
 import '../services/favorites_service.dart';
 import '../utils/app_theme.dart';
 import '../widgets/genre_chip.dart';
@@ -8,10 +9,12 @@ import '../widgets/theme_toggle_button.dart';
 
 class DetailScreen extends StatefulWidget {
   final Anime anime;
+  final bool loadFromApi;
 
   const DetailScreen({
     Key? key,
     required this.anime,
+    this.loadFromApi = false,
   }) : super(key: key);
 
   @override
@@ -28,6 +31,30 @@ class _DetailScreenState extends State<DetailScreen> {
     super.initState();
     _anime = widget.anime;
     _loadFavoriteStatus();
+    _loadAnimeDetailsIfNeeded();
+  }
+
+  Future<void> _loadAnimeDetailsIfNeeded() async {
+    if (!widget.loadFromApi) {
+      return;
+    }
+
+    final searchResult = await AnimeService.searchAnime(_anime.title);
+    if (!mounted || searchResult.data.isEmpty) {
+      return;
+    }
+
+    final matchedAnime = searchResult.data.firstWhere(
+      (item) => item.title.toLowerCase() == _anime.title.toLowerCase(),
+      orElse: () => searchResult.data.first,
+    );
+
+    final detail = await AnimeService.getAnimeDetail(matchedAnime.malId);
+    final resolvedAnime = detail ?? matchedAnime;
+
+    setState(() {
+      _anime = resolvedAnime;
+    });
   }
 
   Future<void> _loadFavoriteStatus() async {
@@ -293,8 +320,8 @@ class _DetailScreenState extends State<DetailScreen> {
                           _anime.synopsis!,
                           style: TextStyle(
                             color: colorScheme.onSurfaceVariant,
-                            fontSize: 14,
-                            height: 1.6,
+                            fontSize: 15,
+                            height: 1.75,
                           ),
                         ),
                         const SizedBox(height: 24),

@@ -153,21 +153,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return anime.genres?.map((genre) => genre.name).toList() ?? [];
   }
 
-  Future<Anime> _resolveAnimeDetailByTitle(String title) async {
-    final searchResult = await AnimeService.searchAnime(title);
-    if (searchResult.data.isEmpty) {
-      return Anime(malId: 0, title: title);
-    }
-
-    final matchedAnime = searchResult.data.firstWhere(
-      (item) => item.title.toLowerCase() == title.toLowerCase(),
-      orElse: () => searchResult.data.first,
-    );
-
-    final detail = await AnimeService.getAnimeDetail(matchedAnime.malId);
-    return detail ?? matchedAnime;
-  }
-
   Future<void> _openAnimeDetailAndRecord(Anime anime) async {
     final detail = await AnimeService.getAnimeDetail(anime.malId);
     final detailAnime = detail ?? anime;
@@ -196,8 +181,22 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _openRecommendationDetailAndRecord(RecommendationAnime anime) async {
-    final detailAnime = await _resolveAnimeDetailByTitle(anime.title);
-    final categories = detailAnime.genres?.map((genre) => genre.name).toList() ?? anime.categories;
+    final detailAnime = Anime(
+      malId: anime.id,
+      title: anime.title,
+      image: anime.imageUrl,
+      score: anime.score,
+      synopsis: anime.synopsis,
+      genres: anime.categories
+          .map(
+            (category) => Genre(
+              malId: category.hashCode,
+              name: category,
+            ),
+          )
+          .toList(),
+    );
+    final categories = anime.categories;
 
     if (categories.isNotEmpty) {
       await AppDatabase.instance.saveAnimeInteraction(
@@ -214,7 +213,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => DetailScreen(anime: detailAnime),
+        builder: (context) => DetailScreen(
+          anime: detailAnime,
+          loadFromApi: true,
+        ),
       ),
     );
 
