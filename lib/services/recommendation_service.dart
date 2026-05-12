@@ -3,7 +3,7 @@ import 'anime_service.dart';
 import 'app_database.dart';
 
 class RecommendationService {
-  static final Map<String, Future<String?>> _posterCache = {};
+  static final Map<String, Future<RecommendationAnime?>> _detailCache = {};
 
   static Future<List<RecommendationAnime>> getRecommendations(
     int userId,
@@ -57,55 +57,49 @@ class RecommendationService {
 
     final limitedRecommendations = filteredRecommendations.take(limit).toList();
     final hydratedRecommendations = await Future.wait(
-      limitedRecommendations.map(_hydratePosterImage),
+      limitedRecommendations.map(_hydrateRecommendation),
     );
 
-    return hydratedRecommendations;
+    return hydratedRecommendations.whereType<RecommendationAnime>().toList();
   }
 
-  static Future<RecommendationAnime> _hydratePosterImage(
+  static Future<RecommendationAnime?> _hydrateRecommendation(
     RecommendationAnime anime,
   ) async {
-    if (anime.imageUrl != null && anime.imageUrl!.isNotEmpty) {
-      return anime;
-    }
-
-    final posterUrl = await _posterCache.putIfAbsent(
-      anime.title,
-      () async {
-        try {
-          final response = await AnimeService.searchAnime(anime.title);
-          final match = response.data.isEmpty
-              ? null
-              : response.data.firstWhere(
-                  (item) => item.title.toLowerCase() == anime.title.toLowerCase(),
-                  orElse: () => response.data.first,
-                );
-          final candidate = match;
-          final imageUrl = candidate?.image;
-
-          if (imageUrl != null && imageUrl.isNotEmpty) {
-            await AppDatabase.instance.updateRecommendationImageUrl(
-              title: anime.title,
-              imageUrl: imageUrl,
-            );
-          }
-
-          return imageUrl;
-        } catch (_) {
-          return null;
+    return _detailCache.putIfAbsent(anime.title, () async {
+      try {
+        final searchResult = await AnimeService.searchAnime(anime.title);
+        if (searchResult.data.isEmpty) {
+          return anime;
         }
-      },
-    );
 
-    return RecommendationAnime(
-      id: anime.id,
-      title: anime.title,
-      synopsis: anime.synopsis,
-      imageUrl: posterUrl,
-      categories: anime.categories,
-      score: anime.score,
-      matchCount: anime.matchCount,
-    );
+        final matchedAnime = searchResult.data.firstWhere(
+          (item) => item.title.toLowerCase() == anime.title.toLowerCase(),
+          orElse: () => searchResult.data.first,
+        );
+
+        final detail = await AnimeService.getAnimeDetail(matchedAnime.malId);
+        final resolvedAnime = detail ?? matchedAnime;
+        final imageUrl = resolvedAnime.image;
+
+        if (imageUrl != null && imageUrl.isNotEmpty) {
+          await AppDatabase.instance.updateRecommendationImageUrl(
+            title: anime.title,
+            imageUrl: imageUrl,
+          );
+        }
+
+        return anime.copyWith(
+          synopsis: resolvedAnime.synopsis,
+          imageUrl: imageUrl,
+          episodes: resolvedAnime.episodes,
+          status: resolvedAnime.status,
+          rank: resolvedAnime.rank,
+          popularity: resolvedAnime.popularity,
+        );
+      } catch (_) {
+        return anime;
+      }
+    });
   }
 }

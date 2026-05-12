@@ -181,29 +181,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _openRecommendationDetailAndRecord(RecommendationAnime anime) async {
-    final detailAnime = Anime(
-      malId: anime.id,
-      title: anime.title,
-      image: anime.imageUrl,
-      score: anime.score,
-      synopsis: anime.synopsis,
-      genres: anime.categories
-          .map(
-            (category) => Genre(
-              malId: category.hashCode,
-              name: category,
-            ),
-          )
-          .toList(),
-    );
-    final categories = anime.categories;
-
-    if (categories.isNotEmpty) {
+    if (anime.categories.isNotEmpty) {
       await AppDatabase.instance.saveAnimeInteraction(
         userId: widget.user.id,
         animeId: anime.id,
         animeTitle: anime.title,
-        categories: categories,
+        categories: anime.categories,
       );
     }
 
@@ -213,10 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => DetailScreen(
-          anime: detailAnime,
-          loadFromApi: true,
-        ),
+        builder: (context) => DetailScreen(anime: anime.toAnime()),
       ),
     );
 

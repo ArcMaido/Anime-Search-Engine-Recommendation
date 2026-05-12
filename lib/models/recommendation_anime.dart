@@ -1,3 +1,5 @@
+import 'anime_model.dart';
+
 class RecommendationAnime {
   final int id;
   final String title;
@@ -6,6 +8,10 @@ class RecommendationAnime {
   final List<String> categories;
   final double score;
   final int matchCount;
+  final int? episodes;
+  final String? status;
+  final int? rank;
+  final int? popularity;
 
   const RecommendationAnime({
     required this.id,
@@ -15,6 +21,10 @@ class RecommendationAnime {
     required this.score,
     this.imageUrl,
     this.matchCount = 0,
+    this.episodes,
+    this.status,
+    this.rank,
+    this.popularity,
   });
 
   factory RecommendationAnime.fromMap(
@@ -38,15 +48,49 @@ class RecommendationAnime {
     );
   }
 
-  RecommendationAnime copyWith({int? matchCount}) {
+  RecommendationAnime copyWith({
+    int? matchCount,
+    String? synopsis,
+    String? imageUrl,
+    int? episodes,
+    String? status,
+    int? rank,
+    int? popularity,
+  }) {
     return RecommendationAnime(
       id: id,
       title: title,
-      synopsis: synopsis,
-      imageUrl: imageUrl,
+      synopsis: synopsis ?? this.synopsis,
+      imageUrl: imageUrl ?? this.imageUrl,
       categories: categories,
       score: score,
       matchCount: matchCount ?? this.matchCount,
+      episodes: episodes ?? this.episodes,
+      status: status ?? this.status,
+      rank: rank ?? this.rank,
+      popularity: popularity ?? this.popularity,
+    );
+  }
+
+  Anime toAnime() {
+    return Anime(
+      malId: id,
+      title: title,
+      image: imageUrl,
+      score: score,
+      episodes: episodes,
+      status: status,
+      synopsis: synopsis,
+      genres: categories
+          .map(
+            (category) => Genre(
+              malId: category.hashCode,
+              name: category,
+            ),
+          )
+          .toList(),
+      rank: rank,
+      popularity: popularity,
     );
   }
 }
