@@ -34,19 +34,54 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  static const List<String> _availableCategories = [
+    'Action',
+    'Adventure',
+    'Comedy',
+    'Drama',
+    'Fantasy',
+    'Romance',
+    'Sci-Fi',
+    'Slice of Life',
+    'Supernatural',
+    'Mystery',
+    'Sports',
+    'Horror',
+  ];
+
+  static const int _recommendationsPerPage = 10;
+
   List<Anime> _animeList = [];
   List<RecommendationAnime> _categoryRecommendations = [];
+  List<String> _activeCategories = [];
   bool _isLoading = false;
   bool _isRecommendationLoading = false;
   bool _hasError = false;
   String _errorMessage = '';
   String _searchQuery = '';
+  int _recommendationPage = 0;
   Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
-    _loadCategoryRecommendations();
+    _initializeHome();
+  }
+
+  Future<void> _initializeHome() async {
+    final savedCategories = await AppDatabase.instance.getActiveCategories();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _activeCategories = savedCategories.isNotEmpty
+          ? savedCategories
+          : List<String>.from(widget.selectedCategories);
+    });
+
+    await _loadCategoryRecommendations();
   }
 
   @override
@@ -60,11 +95,29 @@ class _HomeScreenState extends State<HomeScreen> {
       _isRecommendationLoading = true;
     });
 
+    final hasSavedHistory =
+        (await AppDatabase.instance.getUserCategoryWeights(widget.user.id))
+            .isNotEmpty;
+
+    if (_activeCategories.isEmpty && !hasSavedHistory) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _categoryRecommendations = [];
+        _recommendationPage = 0;
+        _isRecommendationLoading = false;
+      });
+
+      return;
+    }
+
     try {
       final recommendations = await RecommendationService.getRecommendations(
         widget.user.id,
-        widget.selectedCategories,
-        limit: 10,
+        _activeCategories,
+        limit: 30,
       );
 
       if (!mounted) {
@@ -73,6 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       setState(() {
         _categoryRecommendations = recommendations;
+        _recommendationPage = 0;
         _isRecommendationLoading = false;
       });
     } catch (e) {
@@ -85,6 +139,288 @@ class _HomeScreenState extends State<HomeScreen> {
         _isRecommendationLoading = false;
       });
     }
+  }
+
+  Future<List<String>> _resolveAnimeCategories(Anime anime) async {
+    final detail = await AnimeService.getAnimeDetail(anime.malId);
+    final source = detail ?? anime;
+    final categories = source.genres?.map((genre) => genre.name).toList() ?? [];
+
+    if (categories.isNotEmpty) {
+      return categories;
+    }
+
+    return anime.genres?.map((genre) => genre.name).toList() ?? [];
+  }
+
+  Future<Anime> _resolveAnimeDetailByTitle(String title) async {
+    final searchResult = await AnimeService.searchAnime(title);
+    if (searchResult.data.isEmpty) {
+      return Anime(malId: 0, title: title);
+    }
+
+    final matchedAnime = searchResult.data.firstWhere(
+      (item) => item.title.toLowerCase() == title.toLowerCase(),
+      orElse: () => searchResult.data.first,
+    );
+
+    final detail = await AnimeService.getAnimeDetail(matchedAnime.malId);
+    return detail ?? matchedAnime;
+  }
+
+  Future<void> _openAnimeDetailAndRecord(Anime anime) async {
+    final detail = await AnimeService.getAnimeDetail(anime.malId);
+    final detailAnime = detail ?? anime;
+    final categories = detailAnime.genres?.map((genre) => genre.name).toList() ?? [];
+
+    if (categories.isNotEmpty) {
+      await AppDatabase.instance.saveAnimeInteraction(
+        userId: widget.user.id,
+        animeId: detailAnime.malId,
+        animeTitle: detailAnime.title,
+        categories: categories,
+      );
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => DetailScreen(anime: detailAnime),
+      ),
+    );
+
+    await _loadCategoryRecommendations();
+  }
+
+  Future<void> _openRecommendationDetailAndRecord(RecommendationAnime anime) async {
+    final detailAnime = await _resolveAnimeDetailByTitle(anime.title);
+    final categories = detailAnime.genres?.map((genre) => genre.name).toList() ?? anime.categories;
+
+    if (categories.isNotEmpty) {
+      await AppDatabase.instance.saveAnimeInteraction(
+        userId: widget.user.id,
+        animeId: anime.id,
+        animeTitle: anime.title,
+        categories: categories,
+      );
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => DetailScreen(anime: detailAnime),
+      ),
+    );
+
+    await _loadCategoryRecommendations();
+  }
+
+  Future<void> _showCategorySelectionPrompt({
+    required String title,
+    required List<String> categories,
+    String? imageUrl,
+    Anime? detailAnime,
+    int? animeId,
+    String? animeTitle,
+    bool persistSelection = false,
+  }) async {
+    if (categories.isEmpty || !mounted) {
+      return;
+    }
+
+    final selectedCategories = <String>{};
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheetContext) {
+        final colorScheme = Theme.of(sheetContext).colorScheme;
+
+        return SafeArea(
+          child: StatefulBuilder(
+            builder: (context, setSheetState) {
+              final canConfirm = selectedCategories.length >= 3;
+
+              return Padding(
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 16,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 44,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: colorScheme.outline,
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 80,
+                          height: 80,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(18),
+                            child: imageUrl != null && imageUrl.isNotEmpty
+                                ? CachedNetworkImage(
+                                    imageUrl: imageUrl,
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) => Container(
+                                      color: colorScheme.surfaceContainerHighest,
+                                    ),
+                                    errorWidget: (context, url, error) => Container(
+                                      color: colorScheme.surfaceContainerHighest,
+                                      child: Icon(
+                                        Icons.image_not_supported,
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  )
+                                : Container(
+                                    color: colorScheme.surfaceContainerHighest,
+                                    child: Icon(
+                                      Icons.category_outlined,
+                                      color: colorScheme.onSurfaceVariant,
+                                      size: 34,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: TextStyle(
+                                  color: colorScheme.onSurface,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Select at least 3 categories, then confirm to refresh recommendations.',
+                                style: TextStyle(
+                                  color: colorScheme.onSurfaceVariant,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: categories.map((category) {
+                        final isSelected = selectedCategories.contains(category);
+                        return FilterChip(
+                          selected: isSelected,
+                          label: Text(category),
+                          onSelected: (_) {
+                            setSheetState(() {
+                              if (isSelected) {
+                                selectedCategories.remove(category);
+                              } else {
+                                selectedCategories.add(category);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Selected: ${selectedCategories.length}',
+                      style: TextStyle(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        if (detailAnime != null)
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () {
+                                Navigator.of(sheetContext).pop();
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => DetailScreen(anime: detailAnime),
+                                  ),
+                                );
+                              },
+                              child: const Text('View details'),
+                            ),
+                          ),
+                        if (detailAnime != null) const SizedBox(width: 12),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: canConfirm
+                                ? () async {
+                                    if (persistSelection && animeId != null && animeTitle != null) {
+                                      await AppDatabase.instance.saveAnimeInteraction(
+                                        userId: widget.user.id,
+                                        animeId: animeId,
+                                        animeTitle: animeTitle,
+                                        categories: selectedCategories.toList(),
+                                      );
+                                    }
+
+                                    if (!mounted) {
+                                      return;
+                                    }
+
+                                    setState(() {
+                                      _activeCategories = selectedCategories.toList();
+                                    });
+
+                                    await AppDatabase.instance.saveActiveCategories(
+                                      selectedCategories.toList(),
+                                    );
+
+                                    Navigator.of(sheetContext).pop();
+                                    await _loadCategoryRecommendations();
+                                  }
+                                : null,
+                            child: const Text('Confirm'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _recordAnimeInteraction(Anime anime) async {
@@ -152,34 +488,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _searchAnime(query);
   }
 
-  Future<void> _navigateToDetail(Anime anime) async {
-    await _recordAnimeInteraction(anime);
-
-    await Navigator.of(context).push(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) {
-          return DetailScreen(anime: anime);
-        },
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          const begin = Offset(0.0, 1.0);
-          const end = Offset.zero;
-          const curve = Curves.easeInOutCubic;
-
-          final tween = Tween(begin: begin, end: end).chain(
-            CurveTween(curve: curve),
-          );
-
-          return SlideTransition(
-            position: animation.drive(tween),
-            child: child,
-          );
-        },
-      ),
-    );
-
-    await _loadCategoryRecommendations();
-  }
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -208,12 +516,20 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             tooltip: 'Settings',
             icon: const Icon(Icons.settings_outlined),
-            onPressed: () {
-              Navigator.of(context).push(
+            onPressed: () async {
+              final clearedData = await Navigator.of(context).push<bool>(
                 MaterialPageRoute(
                   builder: (context) => const SettingsScreen(),
                 ),
               );
+
+              if (clearedData == true) {
+                _activeCategories = [];
+                await _showCategorySelectionPrompt(
+                  title: 'Choose categories to restart recommendations',
+                  categories: _availableCategories,
+                );
+              }
             },
           ),
         ],
@@ -232,20 +548,80 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildContent() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     if (_searchQuery.isEmpty) {
       if (_isRecommendationLoading) {
         return const LoadingState(message: 'Preparing your recommendations...');
       }
 
       if (_categoryRecommendations.isNotEmpty) {
-        return ListView.builder(
-          itemCount: _categoryRecommendations.length,
-          padding: const EdgeInsets.only(bottom: 16),
-          itemBuilder: (context, index) {
-            return _RecommendationCard(
-              anime: _categoryRecommendations[index],
-            );
-          },
+        final totalPages =
+            (_categoryRecommendations.length / _recommendationsPerPage).ceil();
+        final startIndex = _recommendationPage * _recommendationsPerPage;
+        final endIndex = (startIndex + _recommendationsPerPage)
+            .clamp(0, _categoryRecommendations.length);
+        final visibleRecommendations = _categoryRecommendations.sublist(
+          startIndex,
+          endIndex,
+        );
+
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Previous page',
+                    onPressed: _recommendationPage > 0
+                        ? () {
+                            setState(() {
+                              _recommendationPage--;
+                            });
+                          }
+                        : null,
+                    icon: const Icon(Icons.arrow_back),
+                  ),
+                  Expanded(
+                    child: Text(
+                      'Recommendations page ${_recommendationPage + 1} of $totalPages',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Next page',
+                    onPressed: _recommendationPage < totalPages - 1
+                        ? () {
+                            setState(() {
+                              _recommendationPage++;
+                            });
+                          }
+                        : null,
+                    icon: const Icon(Icons.arrow_forward),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: visibleRecommendations.length,
+                padding: const EdgeInsets.only(bottom: 16),
+                itemBuilder: (context, index) {
+                  return _RecommendationCard(
+                    anime: visibleRecommendations[index],
+                    onTap: () => _openRecommendationDetailAndRecord(
+                      visibleRecommendations[index],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         );
       }
     }
@@ -283,7 +659,7 @@ class _HomeScreenState extends State<HomeScreen> {
       itemBuilder: (context, index) {
         return AnimeCard(
           anime: _animeList[index],
-          onTap: () => _navigateToDetail(_animeList[index]),
+          onTap: () => _openAnimeDetailAndRecord(_animeList[index]),
         );
       },
     );
@@ -292,8 +668,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _RecommendationCard extends StatelessWidget {
   final RecommendationAnime anime;
+  final VoidCallback onTap;
 
-  const _RecommendationCard({required this.anime});
+  const _RecommendationCard({
+    required this.anime,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -301,89 +681,144 @@ class _RecommendationCard extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Card(
-        margin: EdgeInsets.zero,
+      child: Material(
         color: colorScheme.surface,
-        elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(22),
           side: BorderSide(color: colorScheme.outline),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 100,
-              height: 140,
-              child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(22),
-                  bottomLeft: Radius.circular(22),
-                ),
-                child: anime.imageUrl != null && anime.imageUrl!.isNotEmpty
-                    ? CachedNetworkImage(
-                        imageUrl: anime.imageUrl!,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          color: colorScheme.surfaceContainerHighest,
-                        ),
-                        errorWidget: (context, url, error) => Container(
-                          color: colorScheme.surfaceContainerHighest,
-                          child: Icon(
-                            Icons.image_not_supported,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      )
-                    : Container(
-                        color: colorScheme.surfaceContainerHighest,
-                        child: Icon(
-                          Icons.auto_awesome,
-                          color: colorScheme.primary,
-                        ),
-                      ),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(14.0),
-                child: Column(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(22),
+          onTap: onTap,
+          child: anime.imageUrl != null && anime.imageUrl!.isNotEmpty
+              ? Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      anime.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: colorScheme.onSurface,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                    SizedBox(
+                      width: 100,
+                      height: 140,
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(22),
+                          bottomLeft: Radius.circular(22),
+                        ),
+                        child: CachedNetworkImage(
+                          imageUrl: anime.imageUrl!,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: colorScheme.surfaceContainerHighest,
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: colorScheme.surfaceContainerHighest,
+                            child: Icon(
+                              Icons.image_not_supported,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      anime.synopsis,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: colorScheme.onSurface.withOpacity(0.72),
-                        fontSize: 11,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Matched ${anime.matchCount} categories',
-                      style: TextStyle(
-                        color: colorScheme.primary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(14.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              anime.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: colorScheme.onSurface,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              anime.synopsis,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: colorScheme.onSurface.withOpacity(0.72),
+                                fontSize: 11,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Matched ${anime.matchCount} categories',
+                              style: TextStyle(
+                                color: colorScheme.primary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
+                )
+              : Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: 90,
+                        height: 90,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(18),
+                          child: Container(
+                            color: colorScheme.surfaceContainerHighest,
+                            child: Icon(
+                              Icons.image_not_supported,
+                              color: colorScheme.onSurfaceVariant,
+                              size: 34,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              anime.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: colorScheme.onSurface,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              anime.synopsis,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: colorScheme.onSurface.withOpacity(0.72),
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              'Matched ${anime.matchCount} categories',
+                              style: TextStyle(
+                                color: colorScheme.primary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
-          ],
         ),
       ),
     );

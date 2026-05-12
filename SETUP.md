@@ -1,6 +1,6 @@
-# AniSearch Setup Guide
+# SearchNime Setup Guide
 
-Complete guide to set up and run the AniSearch Flutter application.
+Complete guide to set up and run the SearchNime Flutter application.
 
 ## Prerequisites
 

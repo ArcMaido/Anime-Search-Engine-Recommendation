@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../utils/app_theme.dart';
 import 'about_us_screen.dart';
-import 'login_screen.dart';
-import '../services/session_service.dart';
+import '../services/app_database.dart';
+import '../utils/app_theme.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -42,7 +41,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Manage app information or sign out from your account.',
+                  'Manage app information and app preferences.',
                   style: TextStyle(
                     color: colorScheme.onSurfaceVariant,
                     fontSize: 14,
@@ -82,23 +81,50 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  leading: Icon(Icons.logout, color: colorScheme.error),
+                  leading: Icon(Icons.delete_outline, color: colorScheme.error),
                   title: Text(
-                    'Log out',
+                    'Clear Data',
                     style: TextStyle(color: colorScheme.onSurface),
                   ),
                   subtitle: Text(
-                    'Return to the login page',
+                    'Remove saved anime interaction history',
                     style: TextStyle(color: colorScheme.onSurfaceVariant),
                   ),
                   onTap: () async {
-                    await SessionService.clearCurrentUser();
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                        builder: (context) => const LoginScreen(),
-                      ),
-                      (route) => false,
+                    final shouldClear = await showDialog<bool>(
+                      context: context,
+                      builder: (dialogContext) {
+                        return AlertDialog(
+                          title: const Text('Clear data?'),
+                          content: const Text(
+                            'This will remove the saved anime categories used for recommendations.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(dialogContext).pop(false),
+                              child: const Text('Cancel'),
+                            ),
+                            FilledButton(
+                              onPressed: () => Navigator.of(dialogContext).pop(true),
+                              child: const Text('Clear'),
+                            ),
+                          ],
+                        );
+                      },
                     );
+
+                    if (shouldClear != true) {
+                      return;
+                    }
+
+                    await AppDatabase.instance.clearAnimeInteractions();
+                    await AppDatabase.instance.clearActiveCategories();
+
+                    if (!context.mounted) {
+                      return;
+                    }
+
+                    Navigator.of(context).pop(true);
                   },
                 ),
               ],

@@ -1,6 +1,6 @@
-# AniSearch - Features Documentation
+# SearchNime - Features Documentation
 
-Complete documentation of all features implemented in the AniSearch Flutter application.
+Complete documentation of all features implemented in the SearchNime Flutter application.
 
 ## Core Features
 
@@ -417,7 +417,7 @@ dependencies:
 
 ## Summary
 
-AniSearch is a feature-rich, modern Flutter application that demonstrates:
+SearchNime is a feature-rich, modern Flutter application that demonstrates:
 - Professional UI/UX design
 - Robust API integration
 - Proper error handling

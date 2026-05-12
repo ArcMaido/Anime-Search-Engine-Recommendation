@@ -1,6 +1,6 @@
-# AniSearch - Troubleshooting Guide
+# SearchNime - Troubleshooting Guide
 
-Common issues and solutions for the AniSearch Flutter application.
+Common issues and solutions for the SearchNime Flutter application.
 
 ---
 

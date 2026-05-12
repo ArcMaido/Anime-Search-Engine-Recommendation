@@ -1,4 +1,4 @@
-# AniSearch - Modern Anime Search Engine
+# SearchNime - Modern Anime Search Engine
 
 A modern, beautiful Flutter mobile application for searching and discovering anime using the Jikan API (MyAnimeList unofficial API).
 
@@ -226,4 +226,4 @@ This project is open source and available under the MIT License.
 
 ---
 
-**Enjoy discovering anime with AniSearch! 🎌**
+**Enjoy discovering anime with SearchNime!**

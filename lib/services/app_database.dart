@@ -1,4 +1,5 @@
 import 'package:path/path.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../models/recommendation_anime.dart';
@@ -9,7 +10,8 @@ class AppDatabase {
   static final AppDatabase instance = AppDatabase._();
 
   static const String _databaseName = 'searchnime.db';
-  static const int _databaseVersion = 3;
+  static const int _databaseVersion = 4;
+  static const String _activeCategoriesKey = 'active_categories';
 
   static const String usersTable = 'users';
   static const String animeTable = 'anime_catalog';
@@ -59,6 +61,10 @@ class AppDatabase {
         // Column already exists on newer installs.
       }
     }
+
+    if (oldVersion < 4) {
+      await _seedAnimeCatalog(db);
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -101,14 +107,18 @@ class AppDatabase {
     final batch = db.batch();
 
     for (final anime in _seedRecommendations) {
-      batch.insert(animeTable, {
+      batch.insert(
+        animeTable,
+        {
         'id': anime.id,
         'title': anime.title,
         'synopsis': anime.synopsis,
         'image_url': anime.imageUrl,
         'categories': anime.categories.join(', '),
         'score': anime.score,
-      });
+        },
+        conflictAlgorithm: ConflictAlgorithm.ignore,
+      );
     }
 
     await batch.commit(noResult: true);
@@ -157,6 +167,39 @@ class AppDatabase {
     }
 
     return weights;
+  }
+
+  Future<void> clearAnimeInteractions() async {
+    final db = await database;
+    await db.delete(interactionsTable);
+  }
+
+  Future<void> saveActiveCategories(List<String> categories) async {
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setStringList(_activeCategoriesKey, categories);
+  }
+
+  Future<List<String>> getActiveCategories() async {
+    final preferences = await SharedPreferences.getInstance();
+    return preferences.getStringList(_activeCategoriesKey) ?? <String>[];
+  }
+
+  Future<void> clearActiveCategories() async {
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.remove(_activeCategoriesKey);
+  }
+
+  Future<void> updateRecommendationImageUrl({
+    required String title,
+    required String imageUrl,
+  }) async {
+    final db = await database;
+    await db.update(
+      animeTable,
+      {'image_url': imageUrl},
+      where: 'title = ?',
+      whereArgs: [title],
+    );
   }
 
   static final List<RecommendationAnime> _seedRecommendations = [
@@ -212,7 +255,7 @@ class AppDatabase {
           'An emotional fantasy journey that follows an elf mage reflecting on time, memory, and companionship.',
       categories: const ['Fantasy', 'Drama', 'Adventure'],
       score: 9.3,
-      imageUrl: _posterPlaceholder('Frieren: Beyond Journey\'s End'),
+      imageUrl: null,
     ),
     RecommendationAnime(
       id: 107,
@@ -221,7 +264,7 @@ class AppDatabase {
           'Two brilliant students turn romance into a hilarious battle of pride and strategy.',
       categories: const ['Comedy', 'Romance', 'Slice of Life'],
       score: 8.7,
-      imageUrl: _posterPlaceholder('Kaguya-sama: Love Is War'),
+      imageUrl: null,
     ),
     RecommendationAnime(
       id: 108,
@@ -230,7 +273,7 @@ class AppDatabase {
           'A sprawling pirate adventure focused on freedom, friendship, and the pursuit of the ultimate treasure.',
       categories: const ['Action', 'Adventure', 'Comedy', 'Fantasy'],
       score: 9.2,
-      imageUrl: _posterPlaceholder('One Piece'),
+      imageUrl: null,
     ),
     RecommendationAnime(
       id: 109,
@@ -239,7 +282,7 @@ class AppDatabase {
           'A moving drama about a former soldier learning how to understand human emotion through letters.',
       categories: const ['Drama', 'Slice of Life', 'Fantasy'],
       score: 8.9,
-      imageUrl: _posterPlaceholder('Violet Evergarden'),
+      imageUrl: null,
     ),
     RecommendationAnime(
       id: 110,
@@ -248,7 +291,7 @@ class AppDatabase {
           'A high-energy supernatural action series centered on cursed energy and intense battles.',
       categories: const ['Action', 'Supernatural', 'Mystery'],
       score: 8.8,
-      imageUrl: _posterPlaceholder('Jujutsu Kaisen'),
+      imageUrl: null,
     ),
     RecommendationAnime(
       id: 111,
@@ -266,11 +309,79 @@ class AppDatabase {
           'A warm romance and slice-of-life story about two students discovering each other\'s hidden sides.',
       categories: const ['Romance', 'Slice of Life', 'Comedy'],
       score: 8.4,
-      imageUrl: _posterPlaceholder('Horimiya'),
+      imageUrl: null,
+    ),
+    RecommendationAnime(
+      id: 113,
+      title: 'Haikyuu!!',
+      synopsis:
+          'A fast-paced sports series about a volleyball team chasing growth, teamwork, and big wins.',
+      categories: const ['Sports', 'Comedy', 'Drama'],
+      score: 8.9,
+      imageUrl: null,
+    ),
+    RecommendationAnime(
+      id: 114,
+      title: 'Naruto',
+      synopsis:
+          'A classic ninja adventure following a determined outcast who wants recognition and strength.',
+      categories: const ['Action', 'Adventure', 'Fantasy'],
+      score: 8.0,
+      imageUrl: null,
+    ),
+    RecommendationAnime(
+      id: 115,
+      title: 'Fullmetal Alchemist: Brotherhood',
+      synopsis:
+          'Two brothers search for a way to restore what they lost after a forbidden alchemy ritual.',
+      categories: const ['Action', 'Adventure', 'Drama', 'Fantasy'],
+      score: 9.2,
+      imageUrl: null,
+    ),
+    RecommendationAnime(
+      id: 116,
+      title: 'Death Note',
+      synopsis:
+          'A psychological thriller about a student who gains the power to decide who lives and dies.',
+      categories: const ['Mystery', 'Supernatural', 'Drama'],
+      score: 8.6,
+      imageUrl: null,
+    ),
+    RecommendationAnime(
+      id: 117,
+      title: 'Tokyo Ghoul',
+      synopsis:
+          'A dark fantasy about a college student pulled into the brutal hidden world of ghouls.',
+      categories: const ['Action', 'Horror', 'Drama'],
+      score: 7.8,
+      imageUrl: null,
+    ),
+    RecommendationAnime(
+      id: 118,
+      title: 'Mob Psycho 100',
+      synopsis:
+          'A psychic middle schooler tries to live a normal life while chaos keeps finding him.',
+      categories: const ['Action', 'Comedy', 'Supernatural'],
+      score: 8.8,
+      imageUrl: null,
+    ),
+    RecommendationAnime(
+      id: 119,
+      title: 'Blue Lock',
+      synopsis:
+          'A ruthless soccer training project designed to create the world\'s best striker.',
+      categories: const ['Sports', 'Action', 'Drama'],
+      score: 8.1,
+      imageUrl: null,
+    ),
+    RecommendationAnime(
+      id: 120,
+      title: 'Chainsaw Man',
+      synopsis:
+          'A chaotic devil-hunting story about survival, strange friendships, and impossible odds.',
+      categories: const ['Action', 'Supernatural', 'Horror'],
+      score: 8.5,
+      imageUrl: null,
     ),
   ];
-
-  static String _posterPlaceholder(String title) {
-    return 'https://placehold.co/400x600/0f172a/f8fafc?text=${Uri.encodeComponent(title)}';
-  }
 }

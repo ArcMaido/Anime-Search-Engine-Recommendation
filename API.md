@@ -1,6 +1,6 @@
-# AniSearch - API Documentation
+# SearchNime - API Documentation
 
-Complete guide to the Jikan API integration used in AniSearch.
+Complete guide to the Jikan API integration used in SearchNime.
 
 ## Jikan API Overview
 
@@ -29,7 +29,7 @@ All endpoints are relative to this base URL.
 
 ---
 
-## Endpoints Used in AniSearch
+## Endpoints Used in SearchNime
 
 ### 1. Search Anime
 
@@ -225,7 +225,7 @@ https://api.jikan.moe/v4/anime/20/full
 
 ---
 
-## Implementation in AniSearch
+## Implementation in SearchNime
 
 ### AnimeService Class
 
@@ -571,7 +571,7 @@ CachedNetworkImage(
 
 ## Summary
 
-The AniSearch app effectively integrates with the Jikan API to provide:
+The SearchNime app effectively integrates with the Jikan API to provide:
 - Real-time anime search
 - Detailed anime information
 - Robust error handling

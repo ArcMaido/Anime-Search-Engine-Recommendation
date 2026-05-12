@@ -1,4 +1,4 @@
-name: anisearch
+name: searchnime
 description: A modern anime search engine application using Flutter and Jikan API.
 
 publish_to: 'none'
