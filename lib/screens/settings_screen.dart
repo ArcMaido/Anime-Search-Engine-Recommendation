@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'about_us_screen.dart';
 import '../services/app_database.dart';
-import '../utils/app_theme.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -16,7 +15,7 @@ class SettingsScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: colorScheme.background,
         foregroundColor: colorScheme.onBackground,
-        title: const Text('Settings'),
+        title: const Text('Preferences'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -24,24 +23,33 @@ class SettingsScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: colorScheme.outline.withOpacity(0.7)),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  colorScheme.surface,
+                  colorScheme.primaryContainer.withOpacity(0.35),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: colorScheme.outline.withOpacity(0.9)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Icon(Icons.tune_rounded, color: colorScheme.secondary, size: 28),
+                const SizedBox(height: 10),
                 Text(
-                  'App settings',
+                  'Control Center',
                   style: TextStyle(
                     color: colorScheme.onSurface,
-                    fontSize: 20,
+                    fontSize: 22,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Manage app information and preferences in one place.',
+                  'Manage app data and learn how recommendation tuning works.',
                   style: TextStyle(
                     color: colorScheme.onSurfaceVariant,
                     fontSize: 14,
@@ -54,8 +62,8 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 16),
           _SettingsActionCard(
             icon: Icons.info_outline,
-            title: 'About Us',
-            subtitle: 'Learn more about SearchNime',
+            title: 'Guide & About',
+            subtitle: 'How SearchNime works and how to get better results',
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -67,8 +75,8 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 12),
           _SettingsActionCard(
             icon: Icons.delete_outline,
-            title: 'Clear Data',
-            subtitle: 'Remove saved anime interaction history',
+            title: 'Reset Recommendation Data',
+            subtitle: 'Clear category learning and restart your recommendations',
             destructive: true,
             onTap: () async {
               final shouldClear = await showDialog<bool>(
@@ -135,15 +143,15 @@ class _SettingsActionCard extends StatelessWidget {
 
     return Material(
       color: colorScheme.surface,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(18),
       child: InkWell(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(18),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: colorScheme.outline.withOpacity(0.7)),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: colorScheme.outline.withOpacity(0.9)),
           ),
           child: Row(
             children: [
@@ -151,8 +159,13 @@ class _SettingsActionCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(16),
+                  gradient: LinearGradient(
+                    colors: [
+                      iconColor.withOpacity(0.2),
+                      iconColor.withOpacity(0.08),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(icon, color: iconColor),
               ),

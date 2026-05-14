@@ -34,38 +34,50 @@ class _AnimeSearchBarState extends State<AnimeSearchBar> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final hasText = _controller.text.trim().isNotEmpty;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-      child: Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
         decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: colorScheme.outline.withOpacity(0.7)),
+          gradient: LinearGradient(
+            colors: [
+              colorScheme.surface,
+              colorScheme.surfaceContainerHighest.withOpacity(0.55),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: hasText ? colorScheme.primary : colorScheme.outline,
+            width: hasText ? 1.2 : 1,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 22,
-              offset: const Offset(0, 10),
+              color: colorScheme.shadow.withOpacity(0.08),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
         child: TextField(
           controller: _controller,
-          style: TextStyle(color: colorScheme.onSurface, fontSize: 15),
+          textInputAction: TextInputAction.search,
+          style: TextStyle(
+            color: colorScheme.onSurface,
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
           onChanged: (value) {
             setState(() {});
             widget.onChanged?.call(value);
           },
-          onSubmitted: (value) {
-            widget.onSearch(value);
-          },
+          onSubmitted: widget.onSearch,
           decoration: InputDecoration(
-            hintText: 'Search anime, studios, or genres',
-            prefixIcon: Icon(
-              Icons.search_rounded,
-              color: colorScheme.primary,
-            ),
+            border: InputBorder.none,
+            hintText: 'Search anime title, genre, mood',
+            prefixIcon: Icon(Icons.travel_explore_rounded, color: colorScheme.primary),
             suffixIcon: widget.isLoading
                 ? Padding(
                     padding: const EdgeInsets.all(14.0),
@@ -73,23 +85,17 @@ class _AnimeSearchBarState extends State<AnimeSearchBar> {
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          colorScheme.secondary,
-                        ),
+                        valueColor: AlwaysStoppedAnimation<Color>(colorScheme.secondary),
                         strokeWidth: 2,
                       ),
                     ),
                   )
-                : _controller.text.isNotEmpty
+                : hasText
                     ? IconButton(
-                        icon: Icon(
-                          Icons.close_rounded,
-                          color: colorScheme.primary,
-                        ),
+                        tooltip: 'Clear search',
+                        icon: Icon(Icons.close_rounded, color: colorScheme.primary),
                         onPressed: () {
-                          setState(() {
-                            _controller.clear();
-                          });
+                          setState(_controller.clear);
                           widget.onChanged?.call('');
                         },
                       )

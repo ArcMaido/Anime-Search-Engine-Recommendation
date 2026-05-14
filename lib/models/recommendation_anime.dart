@@ -35,6 +35,7 @@ class RecommendationAnime {
         .split(',')
         .map((category) => category.trim())
         .where((category) => category.isNotEmpty)
+      .toSet()
         .toList();
 
     return RecommendationAnime(

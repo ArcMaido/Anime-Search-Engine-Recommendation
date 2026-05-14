@@ -1,236 +1,249 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  static const Color background = Color(0xFF081120);
-  static const Color cardBackground = Color(0xFF111C33);
-  static const Color primaryPurple = Color(0xFF7C3AED);
-  static const Color accentCyan = Color(0xFF38BDF8);
-  static const Color whiteText = Color(0xFFF8FAFC);
-  static const Color greyText = Color(0xFFCBD5E1);
-  static const Color darkGrey = Color(0xFF263448);
+  static const Color deepOcean = Color(0xFF07131F);
+  static const Color midnightCard = Color(0xFF112338);
+  static const Color horizonBlue = Color(0xFF3B82F6);
+  static const Color coral = Color(0xFFFB7185);
+  static const Color mint = Color(0xFF34D399);
+  static const Color moon = Color(0xFFE6EEF8);
+  static const Color mist = Color(0xFF95A8BF);
 
-  static const Color lightBackground = Color(0xFFF4F7FB);
-  static const Color lightCardBackground = Color(0xFFFFFFFF);
-  static const Color lightPrimary = Color(0xFF4F46E5);
-  static const Color lightAccent = Color(0xFF0EA5E9);
-  static const Color lightText = Color(0xFF0F172A);
-  static const Color lightMuted = Color(0xFF64748B);
-  static const Color lightBorder = Color(0xFFD8E0EA);
+  static const Color paper = Color(0xFFF6F4EF);
+  static const Color ivoryCard = Color(0xFFFFFFFF);
+  static const Color cobalt = Color(0xFF1D4ED8);
+  static const Color sunset = Color(0xFFE85D75);
+  static const Color sea = Color(0xFF0EA5A3);
+  static const Color ink = Color(0xFF102236);
+  static const Color slate = Color(0xFF5A6F86);
+
+  // Compatibility aliases for existing widgets.
+  static const Color background = deepOcean;
+  static const Color cardBackground = midnightCard;
+  static const Color primaryPurple = cobalt;
+  static const Color accentCyan = sea;
+  static const Color whiteText = moon;
+  static const Color greyText = mist;
 
   static ThemeData darkTheme() {
+    final textTheme = GoogleFonts.plusJakartaSansTextTheme(
+      ThemeData.dark(useMaterial3: true).textTheme,
+    );
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: primaryPurple,
+        seedColor: horizonBlue,
         brightness: Brightness.dark,
-        surface: cardBackground,
       ).copyWith(
-        primary: primaryPurple,
-        secondary: accentCyan,
-        surface: cardBackground,
-        onSurface: whiteText,
-        surfaceTint: primaryPurple,
+        primary: horizonBlue,
+        secondary: coral,
+        tertiary: mint,
+        background: deepOcean,
+        surface: midnightCard,
+        onSurface: moon,
+        onBackground: moon,
+        outline: const Color(0xFF29405C),
+        surfaceContainerHighest: const Color(0xFF1A334B),
       ),
-      scaffoldBackgroundColor: background,
-      appBarTheme: const AppBarTheme(
-        backgroundColor: background,
-        foregroundColor: whiteText,
+      scaffoldBackgroundColor: deepOcean,
+      textTheme: textTheme.copyWith(
+        headlineLarge: textTheme.headlineLarge?.copyWith(
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.8,
+        ),
+        headlineMedium: textTheme.headlineMedium?.copyWith(
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.6,
+        ),
+        titleLarge: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+        bodyMedium: textTheme.bodyMedium?.copyWith(
+          color: mist,
+          height: 1.5,
+        ),
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: deepOcean,
+        foregroundColor: moon,
         elevation: 0,
-        centerTitle: true,
+        centerTitle: false,
+        titleTextStyle: GoogleFonts.sora(
+          color: moon,
+          fontWeight: FontWeight.w700,
+          fontSize: 21,
+          letterSpacing: -0.2,
+        ),
       ),
       cardTheme: CardThemeData(
-        color: cardBackground,
+        color: midnightCard,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
-      dividerTheme: const DividerThemeData(color: darkGrey, thickness: 1),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: primaryPurple,
-          foregroundColor: whiteText,
+          backgroundColor: horizonBlue,
+          foregroundColor: moon,
+          textStyle: GoogleFonts.sora(fontWeight: FontWeight.w600, fontSize: 14),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: whiteText,
-          side: const BorderSide(color: darkGrey),
+          foregroundColor: moon,
+          side: const BorderSide(color: Color(0xFF29405C)),
+          textStyle: GoogleFonts.sora(fontWeight: FontWeight.w600, fontSize: 14),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
-      ),
-      snackBarTheme: SnackBarThemeData(
-        backgroundColor: cardBackground,
-        contentTextStyle: const TextStyle(color: whiteText),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        behavior: SnackBarBehavior.floating,
-      ),
-      textTheme: const TextTheme(
-        headlineLarge: TextStyle(
-          color: whiteText,
-          fontSize: 30,
-          fontWeight: FontWeight.bold,
-        ),
-        headlineMedium: TextStyle(
-          color: whiteText,
-          fontSize: 25,
-          fontWeight: FontWeight.bold,
-        ),
-        titleLarge: TextStyle(
-          color: whiteText,
-          fontSize: 19,
-          fontWeight: FontWeight.w600,
-        ),
-        titleMedium: TextStyle(
-          color: whiteText,
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-        ),
-        bodyLarge: TextStyle(
-          color: whiteText,
-          fontSize: 16,
-        ),
-        bodyMedium: TextStyle(
-          color: greyText,
-          fontSize: 14,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: cardBackground,
+        fillColor: midnightCard,
+        hintStyle: GoogleFonts.plusJakartaSans(color: mist, fontSize: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: primaryPurple),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFF29405C)),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: darkGrey),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFF29405C)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: primaryPurple, width: 2),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: horizonBlue, width: 1.8),
         ),
-        hintStyle: const TextStyle(color: greyText),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: cardBackground,
-        side: BorderSide(color: whiteText.withOpacity(0.12)),
-        labelStyle: const TextStyle(color: whiteText),
+        backgroundColor: const Color(0xFF17314A),
+        side: const BorderSide(color: Color(0xFF2A4A67)),
+        labelStyle: GoogleFonts.plusJakartaSans(
+          color: moon,
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: midnightCard,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        contentTextStyle: GoogleFonts.plusJakartaSans(color: moon),
       ),
     );
   }
 
   static ThemeData lightTheme() {
+    final textTheme = GoogleFonts.plusJakartaSansTextTheme(
+      ThemeData.light(useMaterial3: true).textTheme,
+    );
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: lightPrimary,
+        seedColor: cobalt,
         brightness: Brightness.light,
-        surface: lightCardBackground,
       ).copyWith(
-        primary: lightPrimary,
-        secondary: lightAccent,
-        surface: lightCardBackground,
-        onSurface: lightText,
-        surfaceTint: lightPrimary,
+        primary: cobalt,
+        secondary: sunset,
+        tertiary: sea,
+        background: paper,
+        surface: ivoryCard,
+        onSurface: ink,
+        onBackground: ink,
+        outline: const Color(0xFFD4DEE9),
+        surfaceContainerHighest: const Color(0xFFE9EEF5),
       ),
-      scaffoldBackgroundColor: lightBackground,
-      appBarTheme: const AppBarTheme(
-        backgroundColor: lightBackground,
-        foregroundColor: lightText,
+      scaffoldBackgroundColor: paper,
+      textTheme: textTheme.copyWith(
+        headlineLarge: textTheme.headlineLarge?.copyWith(
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.8,
+        ),
+        headlineMedium: textTheme.headlineMedium?.copyWith(
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.6,
+        ),
+        titleLarge: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+        bodyMedium: textTheme.bodyMedium?.copyWith(
+          color: slate,
+          height: 1.5,
+        ),
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: paper,
+        foregroundColor: ink,
         elevation: 0,
-        centerTitle: true,
+        centerTitle: false,
+        titleTextStyle: GoogleFonts.sora(
+          color: ink,
+          fontWeight: FontWeight.w700,
+          fontSize: 21,
+          letterSpacing: -0.2,
+        ),
       ),
       cardTheme: CardThemeData(
-        color: lightCardBackground,
+        color: ivoryCard,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
-      dividerTheme: const DividerThemeData(color: lightBorder, thickness: 1),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: lightPrimary,
+          backgroundColor: cobalt,
           foregroundColor: Colors.white,
+          textStyle: GoogleFonts.sora(fontWeight: FontWeight.w600, fontSize: 14),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: lightText,
-          side: const BorderSide(color: lightBorder),
+          foregroundColor: ink,
+          side: const BorderSide(color: Color(0xFFD4DEE9)),
+          textStyle: GoogleFonts.sora(fontWeight: FontWeight.w600, fontSize: 14),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
-      ),
-      snackBarTheme: SnackBarThemeData(
-        backgroundColor: lightCardBackground,
-        contentTextStyle: const TextStyle(color: lightText),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        behavior: SnackBarBehavior.floating,
-      ),
-      textTheme: const TextTheme(
-        headlineLarge: TextStyle(
-          color: lightText,
-          fontSize: 30,
-          fontWeight: FontWeight.bold,
-        ),
-        headlineMedium: TextStyle(
-          color: lightText,
-          fontSize: 25,
-          fontWeight: FontWeight.bold,
-        ),
-        titleLarge: TextStyle(
-          color: lightText,
-          fontSize: 19,
-          fontWeight: FontWeight.w600,
-        ),
-        titleMedium: TextStyle(
-          color: lightText,
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-        ),
-        bodyLarge: TextStyle(
-          color: lightText,
-          fontSize: 16,
-        ),
-        bodyMedium: TextStyle(
-          color: lightMuted,
-          fontSize: 14,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: lightCardBackground,
+        fillColor: ivoryCard,
+        hintStyle: GoogleFonts.plusJakartaSans(color: slate, fontSize: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: lightBorder),
+          borderSide: const BorderSide(color: Color(0xFFD4DEE9)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: lightBorder),
+          borderSide: const BorderSide(color: Color(0xFFD4DEE9)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: lightPrimary, width: 2),
+          borderSide: const BorderSide(color: cobalt, width: 1.8),
         ),
-        hintStyle: const TextStyle(color: lightMuted),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: lightCardBackground,
-        side: const BorderSide(color: lightBorder),
-        labelStyle: const TextStyle(color: lightText),
+        backgroundColor: const Color(0xFFEAF2FF),
+        side: const BorderSide(color: Color(0xFFC9D9F4)),
+        labelStyle: GoogleFonts.plusJakartaSans(
+          color: ink,
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: ivoryCard,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        contentTextStyle: GoogleFonts.plusJakartaSans(color: ink),
       ),
     );
   }

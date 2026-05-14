@@ -12,7 +12,7 @@ class AboutUsScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: colorScheme.background,
         foregroundColor: colorScheme.onBackground,
-        title: const Text('About Us'),
+        title: const Text('SearchNime Guide'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -21,7 +21,14 @@ class AboutUsScreen extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: colorScheme.surface,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  colorScheme.surface,
+                  colorScheme.tertiaryContainer.withOpacity(0.3),
+                ],
+              ),
               borderRadius: BorderRadius.circular(22),
               border: Border.all(color: colorScheme.outline),
             ),
@@ -47,16 +54,16 @@ class AboutUsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'SearchNime Guide',
+                        'Find Better Anime Faster',
                         style: TextStyle(
                           color: colorScheme.onSurface,
-                          fontSize: 24,
+                          fontSize: 23,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'A simple guide for using search, recommendations, favorites, and the clear-data reset.',
+                        'Use this quick guide to improve recommendation quality and personalize your feed.',
                         style: TextStyle(
                           color: colorScheme.onSurfaceVariant,
                           fontSize: 14,
@@ -72,15 +79,15 @@ class AboutUsScreen extends StatelessWidget {
           const SizedBox(height: 16),
           _GuideCard(
             icon: Icons.search,
-            title: 'Search Anime',
+            title: 'Search Quickly',
             description:
-                'Type an anime title in the search bar. Tap a result to open the category picker and choose categories for recommendations.',
+              'Type a title or mood and results update faster while you type. Open any result to refine recommendations.',
           ),
           _GuideCard(
             icon: Icons.recommend,
-            title: 'Recommendation Area',
+            title: 'Recommendation Feed',
             description:
-                'The recommendation list shows anime based on selected categories and click history. Use the category picker to refresh what appears here.',
+              'Your feed ranks anime by category relevance and interaction history, not alphabetical order.',
           ),
           _GuideCard(
             icon: Icons.favorite_border,
@@ -96,9 +103,9 @@ class AboutUsScreen extends StatelessWidget {
           ),
           _GuideCard(
             icon: Icons.delete_outline,
-            title: 'Clear Data',
+            title: 'Reset Data',
             description:
-                'Clear Data removes saved interaction history. After clearing, the app will prompt you to pick categories again before recommendations are shown.',
+                'Reset clears saved category learning. You will immediately choose fresh categories to restart.',
           ),
         ],
       ),
@@ -126,7 +133,7 @@ class _GuideCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: colorScheme.outline),
       ),
       child: Row(

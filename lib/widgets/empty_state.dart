@@ -18,19 +18,26 @@ class EmptyState extends StatelessWidget {
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 28.0),
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(26),
           decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: colorScheme.outline.withOpacity(0.7)),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                colorScheme.surface,
+                colorScheme.surfaceContainerHighest.withOpacity(0.4),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: colorScheme.outline.withOpacity(0.9)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
+                color: colorScheme.shadow.withOpacity(0.08),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
@@ -42,8 +49,8 @@ class EmptyState extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      colorScheme.primaryContainer.withOpacity(0.8),
-                      colorScheme.secondaryContainer.withOpacity(0.7),
+                      colorScheme.primaryContainer.withOpacity(0.9),
+                      colorScheme.secondaryContainer.withOpacity(0.8),
                     ],
                   ),
                   shape: BoxShape.circle,
@@ -60,7 +67,7 @@ class EmptyState extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: colorScheme.onSurface,
-                  fontSize: 21,
+                  fontSize: 22,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -71,7 +78,7 @@ class EmptyState extends StatelessWidget {
                     subtitle!,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: colorScheme.onSurface.withOpacity(0.72),
+                      color: colorScheme.onSurfaceVariant,
                       fontSize: 14,
                       height: 1.5,
                     ),

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 import '../models/anime_model.dart';
 import '../services/favorites_service.dart';
-import '../utils/app_theme.dart';
 import '../widgets/theme_toggle_button.dart';
 import 'detail_screen.dart';
 
@@ -91,10 +90,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         backgroundColor: colorScheme.background,
         foregroundColor: colorScheme.onBackground,
         elevation: 0,
-        centerTitle: true,
-        title: const Text(
-          'Favorites',
-        ),
+        title: const Text('Your Favorites'),
         actions: const [ThemeToggleButton()],
       ),
       body: _buildBody(),
@@ -103,9 +99,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
+      final colorScheme = Theme.of(context).colorScheme;
+      return Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryPurple),
+          valueColor: AlwaysStoppedAnimation<Color>(colorScheme.secondary),
         ),
       );
     }
@@ -166,7 +163,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     }
 
     return RefreshIndicator(
-      color: AppTheme.primaryPurple,
+      color: Theme.of(context).colorScheme.secondary,
       onRefresh: _loadFavorites,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -225,12 +222,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                       color: Theme.of(context)
                                           .colorScheme
                                           .surfaceContainerHighest,
-                                      child: const Center(
+                                      child: Center(
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
                                           valueColor:
                                               AlwaysStoppedAnimation<Color>(
-                                            AppTheme.primaryPurple,
+                                                Theme.of(context).colorScheme.secondary,
                                           ),
                                         ),
                                       ),
@@ -240,10 +237,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                       color: Theme.of(context)
                                           .colorScheme
                                           .surfaceContainerHighest,
-                                      child: const Center(
+                                          child: Center(
                                         child: Icon(
                                           Icons.image_not_supported,
-                                          color: AppTheme.greyText,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
                                         ),
                                       ),
                                     ),
@@ -252,10 +251,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                     color: Theme.of(context)
                                         .colorScheme
                                         .surfaceContainerHighest,
-                                    child: const Center(
+                                        child: Center(
                                       child: Icon(
                                         Icons.image_not_supported,
-                                        color: AppTheme.greyText,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurfaceVariant,
                                       ),
                                     ),
                                   ),
@@ -275,19 +276,19 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                         anime.title,
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: AppTheme.whiteText,
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.onSurface,
                                           fontSize: 16,
-                                          fontWeight: FontWeight.w600,
+                                          fontWeight: FontWeight.w700,
                                         ),
                                       ),
                                     ),
                                     const SizedBox(width: 8),
                                     IconButton(
                                       onPressed: () => _removeFavorite(anime),
-                                      icon: const Icon(
+                                      icon: Icon(
                                         Icons.favorite,
-                                        color: AppTheme.primaryPurple,
+                                        color: Theme.of(context).colorScheme.secondary,
                                       ),
                                       tooltip: 'Remove from favorites',
                                     ),
@@ -297,16 +298,16 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                 if (anime.score != null && anime.score! > 0)
                                   Row(
                                     children: [
-                                      const Icon(
+                                      Icon(
                                         Icons.star,
-                                        color: AppTheme.accentCyan,
+                                        color: Theme.of(context).colorScheme.tertiary,
                                         size: 14,
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
                                         anime.score!.toStringAsFixed(1),
-                                        style: const TextStyle(
-                                          color: AppTheme.accentCyan,
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.tertiary,
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
                                         ),
@@ -318,8 +319,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                   anime.status ?? 'N/A',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: AppTheme.greyText,
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                                     fontSize: 12,
                                   ),
                                 ),
@@ -330,8 +331,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                     anime.synopsis!,
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: AppTheme.greyText,
+                                    style: TextStyle(
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                                       fontSize: 11,
                                     ),
                                   ),

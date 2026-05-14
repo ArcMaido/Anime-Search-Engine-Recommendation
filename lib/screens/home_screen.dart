@@ -34,19 +34,47 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  static const int _maxSelectedCategories = 10;
   static const List<String> _availableCategories = [
     'Action',
     'Adventure',
+    'Adult Cast',
+    'Award Winning',
     'Comedy',
     'Drama',
+    'Ecchi',
     'Fantasy',
+    'Girls Love',
+    'Gore',
+    'Gourmet',
+    'Harem',
+    'Historical',
+    'Horror',
+    'Isekai',
+    'Josei',
+    'Kids',
+    'Magic',
+    'Martial Arts',
+    'Mecha',
+    'Military',
+    'Music',
     'Romance',
     'Sci-Fi',
+    'Parody',
+    'Psychological',
     'Slice of Life',
+    'School',
+    'Seinen',
+    'Shoujo',
+    'Shounen',
+    'Space',
+    'Sports',
+    'Super Power',
     'Supernatural',
     'Mystery',
-    'Sports',
-    'Horror',
+    'Thriller',
+    'Team Sports',
+    'Workplace',
   ];
 
   static const int _recommendationsPerPage = 10;
@@ -60,6 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _errorMessage = '';
   String _searchQuery = '';
   int _recommendationPage = 0;
+  int _searchRequestId = 0;
   Timer? _debounceTimer;
 
   @override
@@ -76,9 +105,11 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     setState(() {
-      _activeCategories = savedCategories.isNotEmpty
-          ? savedCategories
-          : List<String>.from(widget.selectedCategories);
+      _activeCategories = _normalizeCategories(
+        savedCategories.isNotEmpty
+            ? savedCategories
+            : List<String>.from(widget.selectedCategories),
+      );
     });
 
     await _loadCategoryRecommendations();
@@ -141,6 +172,34 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  List<String> _normalizeCategories(
+    List<String> categories, {
+    int limit = _maxSelectedCategories,
+  }) {
+    final normalizedCategories = <String>[];
+    final seenCategories = <String>{};
+
+    for (final category in categories) {
+      final trimmedCategory = category.trim();
+
+      if (trimmedCategory.isEmpty) {
+        continue;
+      }
+
+      final categoryKey = trimmedCategory.toLowerCase();
+
+      if (seenCategories.add(categoryKey)) {
+        normalizedCategories.add(trimmedCategory);
+      }
+
+      if (normalizedCategories.length >= limit) {
+        break;
+      }
+    }
+
+    return normalizedCategories;
+  }
+
   Future<List<String>> _resolveAnimeCategories(Anime anime) async {
     final detail = await AnimeService.getAnimeDetail(anime.malId);
     final source = detail ?? anime;
@@ -167,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen> {
         categories: categories,
       );
 
-      // Update recommendations to show anime from the same categories (sorted A-Z)
+      // Update recommendations to show anime from the most related categories.
       final categoryRecommendations =
           await RecommendationService.getRecommendationsByCategories(
         categories,
@@ -214,6 +273,7 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (context) => DetailScreen(
           anime: anime.toAnime(),
           loadFromApi: true,
+          resolveByTitleFirst: true,
         ),
       ),
     );
@@ -232,6 +292,10 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
+    final promptCategories = _normalizeCategories(
+      categories,
+      limit: categories.length,
+    );
     final selectedCategories = <String>{};
 
     await showModalBottomSheet<void>(
@@ -256,162 +320,189 @@ class _HomeScreenState extends State<HomeScreen> {
                   top: 16,
                   bottom: MediaQuery.of(context).viewInsets.bottom + 16,
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 44,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: colorScheme.outline,
-                          borderRadius: BorderRadius.circular(99),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          width: 80,
-                          height: 80,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(18),
-                            child: imageUrl != null && imageUrl.isNotEmpty
-                                ? CachedNetworkImage(
-                                    imageUrl: imageUrl,
-                                    fit: BoxFit.cover,
-                                    placeholder: (context, url) => Container(
-                                      color: colorScheme.surfaceContainerHighest,
-                                    ),
-                                    errorWidget: (context, url, error) => Container(
-                                      color: colorScheme.surfaceContainerHighest,
-                                      child: Icon(
-                                        Icons.image_not_supported,
-                                        color: colorScheme.onSurfaceVariant,
-                                      ),
-                                    ),
-                                  )
-                                : Container(
-                                    color: colorScheme.surfaceContainerHighest,
-                                    child: Icon(
-                                      Icons.category_outlined,
-                                      color: colorScheme.onSurfaceVariant,
-                                      size: 34,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.82,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                title,
-                                style: TextStyle(
-                                  color: colorScheme.onSurface,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
+                              Center(
+                                child: Container(
+                                  width: 44,
+                                  height: 4,
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.outline,
+                                    borderRadius: BorderRadius.circular(99),
+                                  ),
                                 ),
                               ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 16),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(
+                                    width: 80,
+                                    height: 80,
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(18),
+                                      child: imageUrl != null && imageUrl.isNotEmpty
+                                          ? CachedNetworkImage(
+                                              imageUrl: imageUrl,
+                                              fit: BoxFit.cover,
+                                              placeholder: (context, url) => Container(
+                                                color: colorScheme.surfaceContainerHighest,
+                                              ),
+                                              errorWidget: (context, url, error) => Container(
+                                                color: colorScheme.surfaceContainerHighest,
+                                                child: Icon(
+                                                  Icons.image_not_supported,
+                                                  color: colorScheme.onSurfaceVariant,
+                                                ),
+                                              ),
+                                            )
+                                          : Container(
+                                              color: colorScheme.surfaceContainerHighest,
+                                              child: Icon(
+                                                Icons.category_outlined,
+                                                color: colorScheme.onSurfaceVariant,
+                                                size: 34,
+                                              ),
+                                            ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          title,
+                                          style: TextStyle(
+                                            color: colorScheme.onSurface,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          'Select 3 to $_maxSelectedCategories categories, then confirm to refresh recommendations.',
+                                          style: TextStyle(
+                                            color: colorScheme.onSurfaceVariant,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: promptCategories.map((category) {
+                                  final isSelected = selectedCategories.contains(category);
+                                  return FilterChip(
+                                    selected: isSelected,
+                                    label: Text(category),
+                                    onSelected: (_) {
+                                      if (!isSelected &&
+                                          selectedCategories.length >= _maxSelectedCategories) {
+                                        ScaffoldMessenger.of(this.context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'You can select up to $_maxSelectedCategories categories.',
+                                            ),
+                                          ),
+                                        );
+                                        return;
+                                      }
+
+                                      setSheetState(() {
+                                        if (isSelected) {
+                                          selectedCategories.remove(category);
+                                        } else {
+                                          selectedCategories.add(category);
+                                        }
+                                      });
+                                    },
+                                  );
+                                }).toList(),
+                              ),
+                              const SizedBox(height: 12),
                               Text(
-                                'Select at least 3 categories, then confirm to refresh recommendations.',
+                                'Selected: ${selectedCategories.length}/$_maxSelectedCategories',
                                 style: TextStyle(
-                                  color: colorScheme.onSurfaceVariant,
-                                  fontSize: 13,
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: categories.map((category) {
-                        final isSelected = selectedCategories.contains(category);
-                        return FilterChip(
-                          selected: isSelected,
-                          label: Text(category),
-                          onSelected: (_) {
-                            setSheetState(() {
-                              if (isSelected) {
-                                selectedCategories.remove(category);
-                              } else {
-                                selectedCategories.add(category);
-                              }
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Selected: ${selectedCategories.length}',
-                      style: TextStyle(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.w600,
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        if (detailAnime != null)
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          if (detailAnime != null)
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  Navigator.of(sheetContext).pop();
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => DetailScreen(anime: detailAnime),
+                                    ),
+                                  );
+                                },
+                                child: const Text('View details'),
+                              ),
+                            ),
+                          if (detailAnime != null) const SizedBox(width: 12),
                           Expanded(
-                            child: OutlinedButton(
-                              onPressed: () {
-                                Navigator.of(sheetContext).pop();
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => DetailScreen(anime: detailAnime),
-                                  ),
-                                );
-                              },
-                              child: const Text('View details'),
+                            child: FilledButton(
+                              onPressed: canConfirm
+                                  ? () async {
+                                      final normalizedCategories = _normalizeCategories(
+                                        selectedCategories.toList(),
+                                      );
+
+                                      if (persistSelection && animeId != null && animeTitle != null) {
+                                        await AppDatabase.instance.saveAnimeInteraction(
+                                          userId: widget.user.id,
+                                          animeId: animeId,
+                                          animeTitle: animeTitle,
+                                          categories: normalizedCategories,
+                                        );
+                                      }
+
+                                      if (!mounted) {
+                                        return;
+                                      }
+
+                                      setState(() {
+                                        _activeCategories = normalizedCategories;
+                                      });
+
+                                      await AppDatabase.instance.saveActiveCategories(
+                                        normalizedCategories,
+                                      );
+
+                                      Navigator.of(sheetContext).pop();
+                                      await _loadCategoryRecommendations();
+                                    }
+                                  : null,
+                              child: const Text('Confirm'),
                             ),
                           ),
-                        if (detailAnime != null) const SizedBox(width: 12),
-                        Expanded(
-                          child: FilledButton(
-                            onPressed: canConfirm
-                                ? () async {
-                                    if (persistSelection && animeId != null && animeTitle != null) {
-                                      await AppDatabase.instance.saveAnimeInteraction(
-                                        userId: widget.user.id,
-                                        animeId: animeId,
-                                        animeTitle: animeTitle,
-                                        categories: selectedCategories.toList(),
-                                      );
-                                    }
-
-                                    if (!mounted) {
-                                      return;
-                                    }
-
-                                    setState(() {
-                                      _activeCategories = selectedCategories.toList();
-                                    });
-
-                                    await AppDatabase.instance.saveActiveCategories(
-                                      selectedCategories.toList(),
-                                    );
-
-                                    Navigator.of(sheetContext).pop();
-                                    await _loadCategoryRecommendations();
-                                  }
-                                : null,
-                            child: const Text('Confirm'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
@@ -437,6 +528,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _searchAnime(String query) async {
+    final requestId = ++_searchRequestId;
+
     if (query.isEmpty) {
       setState(() {
         _animeList = [];
@@ -452,7 +545,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final result = await AnimeService.searchAnime(query);
-      if (mounted) {
+      if (mounted && requestId == _searchRequestId) {
         setState(() {
           _animeList = result.data;
           _isLoading = false;
@@ -460,7 +553,7 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && requestId == _searchRequestId) {
         setState(() {
           _isLoading = false;
           _hasError = true;
@@ -475,7 +568,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _debounceTimer?.cancel();
     _searchQuery = query;
 
-    _debounceTimer = Timer(const Duration(milliseconds: 800), () {
+    _debounceTimer = Timer(const Duration(milliseconds: 350), () {
       _searchAnime(query);
     });
   }
@@ -493,11 +586,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: colorScheme.background,
       appBar: AppBar(
-        title: const Text('SearchNime'),
+        title: const Text('SearchNime Explorer'),
         backgroundColor: colorScheme.background,
         foregroundColor: colorScheme.onBackground,
         elevation: 0,
-        centerTitle: true,
         actions: [
           const ThemeToggleButton(),
           IconButton(
@@ -532,15 +624,58 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          AnimeSearchBar(
-            onSearch: _onSearchSubmitted,
-            onChanged: _onSearchChanged,
-            isLoading: _isLoading,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              colorScheme.background,
+              colorScheme.surface.withOpacity(0.18),
+              colorScheme.background,
+            ],
           ),
-          Expanded(child: _buildContent()),
-        ],
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: colorScheme.outline.withOpacity(0.85)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.auto_awesome_rounded, color: colorScheme.secondary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _searchQuery.isEmpty
+                            ? 'Pick a title and tune categories for smarter recommendations.'
+                            : 'Live search is optimized for faster updates.',
+                        style: TextStyle(
+                          color: colorScheme.onSurfaceVariant,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            AnimeSearchBar(
+              onSearch: _onSearchSubmitted,
+              onChanged: _onSearchChanged,
+              isLoading: _isLoading,
+            ),
+            Expanded(child: _buildContent()),
+          ],
+        ),
       ),
     );
   }
@@ -568,41 +703,49 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: Row(
-                children: [
-                  IconButton(
-                    tooltip: 'Previous page',
-                    onPressed: _recommendationPage > 0
-                        ? () {
-                            setState(() {
-                              _recommendationPage--;
-                            });
-                          }
-                        : null,
-                    icon: const Icon(Icons.arrow_back),
-                  ),
-                  Expanded(
-                    child: Text(
-                      'Recommendations page ${_recommendationPage + 1} of $totalPages',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: colorScheme.onSurface,
-                        fontWeight: FontWeight.w600,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: colorScheme.outline.withOpacity(0.85)),
+                ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      tooltip: 'Previous page',
+                      onPressed: _recommendationPage > 0
+                          ? () {
+                              setState(() {
+                                _recommendationPage--;
+                              });
+                            }
+                          : null,
+                      icon: const Icon(Icons.arrow_back),
+                    ),
+                    Expanded(
+                      child: Text(
+                        'Recommendations ${_recommendationPage + 1}/$totalPages',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: colorScheme.onSurface,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    tooltip: 'Next page',
-                    onPressed: _recommendationPage < totalPages - 1
-                        ? () {
-                            setState(() {
-                              _recommendationPage++;
-                            });
-                          }
-                        : null,
-                    icon: const Icon(Icons.arrow_forward),
-                  ),
-                ],
+                    IconButton(
+                      tooltip: 'Next page',
+                      onPressed: _recommendationPage < totalPages - 1
+                          ? () {
+                              setState(() {
+                                _recommendationPage++;
+                              });
+                            }
+                          : null,
+                      icon: const Icon(Icons.arrow_forward),
+                    ),
+                  ],
+                ),
               ),
             ),
             Expanded(
@@ -682,11 +825,11 @@ class _RecommendationCard extends StatelessWidget {
       child: Material(
         color: colorScheme.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(18),
           side: BorderSide(color: colorScheme.outline),
         ),
         child: InkWell(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(18),
           onTap: onTap,
           child: anime.imageUrl != null && anime.imageUrl!.isNotEmpty
               ? Row(
@@ -697,8 +840,8 @@ class _RecommendationCard extends StatelessWidget {
                       height: 140,
                       child: ClipRRect(
                         borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(22),
-                          bottomLeft: Radius.circular(22),
+                          topLeft: Radius.circular(18),
+                          bottomLeft: Radius.circular(18),
                         ),
                         child: CachedNetworkImage(
                           imageUrl: anime.imageUrl!,
@@ -718,7 +861,7 @@ class _RecommendationCard extends StatelessWidget {
                     ),
                     Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.all(14.0),
+                        padding: const EdgeInsets.all(12.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -729,7 +872,7 @@ class _RecommendationCard extends StatelessWidget {
                               style: TextStyle(
                                 color: colorScheme.onSurface,
                                 fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -766,7 +909,7 @@ class _RecommendationCard extends StatelessWidget {
                             Text(
                               'Matched ${anime.matchCount} categories',
                               style: TextStyle(
-                                color: colorScheme.primary,
+                                color: colorScheme.secondary,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -786,7 +929,7 @@ class _RecommendationCard extends StatelessWidget {
                         width: 90,
                         height: 90,
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(18),
+                          borderRadius: BorderRadius.circular(14),
                           child: Container(
                             color: colorScheme.surfaceContainerHighest,
                             child: Icon(
@@ -846,7 +989,7 @@ class _RecommendationCard extends StatelessWidget {
                             Text(
                               'Matched ${anime.matchCount} categories',
                               style: TextStyle(
-                                color: colorScheme.primary,
+                                color: colorScheme.secondary,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                               ),

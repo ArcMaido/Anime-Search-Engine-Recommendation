@@ -11,11 +11,17 @@ class ThemeToggleButton extends StatelessWidget {
       valueListenable: ThemeService.themeMode,
       builder: (context, themeMode, child) {
         final isDark = themeMode == ThemeMode.dark;
-        return IconButton(
+        final colorScheme = Theme.of(context).colorScheme;
+
+        return IconButton.filledTonal(
           tooltip: isDark ? 'Switch to light mode' : 'Switch to dark mode',
           onPressed: ThemeService.toggleTheme,
+          style: IconButton.styleFrom(
+            backgroundColor: colorScheme.primaryContainer.withOpacity(0.8),
+            foregroundColor: colorScheme.primary,
+          ),
           icon: Icon(
-            isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+            isDark ? Icons.sunny : Icons.nightlight_round,
           ),
         );
       },

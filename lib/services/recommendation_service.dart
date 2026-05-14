@@ -4,6 +4,7 @@ import 'app_database.dart';
 
 class RecommendationService {
   static final Map<String, Future<RecommendationAnime?>> _detailCache = {};
+  static const int _maxCategoryCount = 10;
 
   static Future<List<RecommendationAnime>> getRecommendations(
     int userId,
@@ -14,8 +15,8 @@ class RecommendationService {
     final rows = await db.query(AppDatabase.animeTable);
     final interactionWeights = await AppDatabase.instance.getUserCategoryWeights(userId);
 
-    final normalizedSelections = selectedCategories
-        .map((category) => category.trim().toLowerCase())
+    final normalizedSelections = _normalizeCategories(selectedCategories)
+      .map((category) => category.toLowerCase())
         .toSet();
 
     final recommendations = rows
@@ -25,7 +26,7 @@ class RecommendationService {
             int total,
             String category,
           ) {
-            final normalizedCategory = category.toLowerCase();
+            final normalizedCategory = category.trim().toLowerCase();
             final selectionBoost =
                 normalizedSelections.contains(normalizedCategory) ? 3 : 0;
             final interactionBoost = interactionWeights[normalizedCategory] ?? 0;
@@ -35,20 +36,7 @@ class RecommendationService {
           return anime.copyWith(matchCount: weightedMatchCount);
         })
         .toList()
-      ..sort((left, right) {
-        final hasSelections = normalizedSelections.isNotEmpty || interactionWeights.isNotEmpty;
-
-        if (!hasSelections) {
-          return right.score.compareTo(left.score);
-        }
-
-        final matchCompare = right.matchCount.compareTo(left.matchCount);
-        if (matchCompare != 0) {
-          return matchCompare;
-        }
-
-        return right.score.compareTo(left.score);
-      });
+      ..sort(_compareRecommendations);
 
     final hasSelections = normalizedSelections.isNotEmpty || interactionWeights.isNotEmpty;
     final filteredRecommendations = hasSelections
@@ -60,7 +48,7 @@ class RecommendationService {
       limitedRecommendations.map(_hydrateRecommendation),
     );
 
-    return _sortAlphabetically(
+    return _sortByRelevance(
       hydratedRecommendations.whereType<RecommendationAnime>().toList(),
     );
   }
@@ -105,7 +93,7 @@ class RecommendationService {
     });
   }
 
-  /// Get recommendations by matching categories, sorted A-Z by title
+  /// Get recommendations by matching categories, ranked by relevance.
   static Future<List<RecommendationAnime>> getRecommendationsByCategories(
     List<String> targetCategories, {
     int limit = 30,
@@ -117,49 +105,95 @@ class RecommendationService {
     final db = await AppDatabase.instance.database;
     final rows = await db.query(AppDatabase.animeTable);
 
-    final normalizedTargetCategories = targetCategories
-        .map((category) => category.trim().toLowerCase())
+    final normalizedTargetCategories = _normalizeCategories(targetCategories)
+        .map((category) => category.toLowerCase())
         .toSet();
 
     final matchingAnime = rows
         .map((row) => RecommendationAnime.fromMap(row))
-        .where((anime) {
-          final animeCategories = anime.categories
-              .map((cat) => cat.trim().toLowerCase())
-              .toSet();
-          return animeCategories.any(
-            (cat) => normalizedTargetCategories.contains(cat),
-          );
+        .map((anime) {
+          final matchCount = anime.categories.where((category) {
+            return normalizedTargetCategories.contains(
+              category.trim().toLowerCase(),
+            );
+          }).length;
+
+          if (matchCount == 0) {
+            return null;
+          }
+
+          return anime.copyWith(matchCount: matchCount);
         })
+        .whereType<RecommendationAnime>()
         .toList()
-      ..sort((a, b) => a.title.compareTo(b.title)); // Sort A-Z
+      ..sort(_compareRecommendations);
 
     final limitedAnime = matchingAnime.take(limit).toList();
     final hydratedAnime = await Future.wait(
       limitedAnime.map(_hydrateRecommendation),
     );
 
-    return _sortAlphabetically(
+    return _sortByRelevance(
       hydratedAnime.whereType<RecommendationAnime>().toList(),
     );
   }
 
-  static List<RecommendationAnime> _sortAlphabetically(
+  static List<String> _normalizeCategories(
+    List<String> categories, {
+    int limit = _maxCategoryCount,
+  }) {
+    final normalizedCategories = <String>[];
+    final seenCategories = <String>{};
+
+    for (final category in categories) {
+      final trimmedCategory = category.trim();
+
+      if (trimmedCategory.isEmpty) {
+        continue;
+      }
+
+      final categoryKey = trimmedCategory.toLowerCase();
+      if (seenCategories.add(categoryKey)) {
+        normalizedCategories.add(trimmedCategory);
+      }
+
+      if (normalizedCategories.length >= limit) {
+        break;
+      }
+    }
+
+    return normalizedCategories;
+  }
+
+  static int _compareRecommendations(
+    RecommendationAnime left,
+    RecommendationAnime right,
+  ) {
+    final matchCompare = right.matchCount.compareTo(left.matchCount);
+    if (matchCompare != 0) {
+      return matchCompare;
+    }
+
+    final scoreCompare = right.score.compareTo(left.score);
+    if (scoreCompare != 0) {
+      return scoreCompare;
+    }
+
+    final leftPopularity = left.popularity ?? 0;
+    final rightPopularity = right.popularity ?? 0;
+    final popularityCompare = leftPopularity.compareTo(rightPopularity);
+    if (popularityCompare != 0) {
+      return popularityCompare;
+    }
+
+    return left.title.toLowerCase().compareTo(right.title.toLowerCase());
+  }
+
+  static List<RecommendationAnime> _sortByRelevance(
     List<RecommendationAnime> animeList,
   ) {
     final sortedList = List<RecommendationAnime>.from(animeList);
-    sortedList.sort((left, right) {
-      final titleCompare = left.title
-          .trim()
-          .toLowerCase()
-          .compareTo(right.title.trim().toLowerCase());
-
-      if (titleCompare != 0) {
-        return titleCompare;
-      }
-
-      return left.title.compareTo(right.title);
-    });
+    sortedList.sort(_compareRecommendations);
     return sortedList;
   }
 }

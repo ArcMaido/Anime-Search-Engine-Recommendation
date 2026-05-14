@@ -12,6 +12,7 @@ class AppDatabase {
   static const String _databaseName = 'searchnime.db';
   static const int _databaseVersion = 4;
   static const String _activeCategoriesKey = 'active_categories';
+  static const int _maxStoredCategories = 10;
 
   static const String usersTable = 'users';
   static const String animeTable = 'anime_catalog';
@@ -130,18 +131,40 @@ class AppDatabase {
     required String animeTitle,
     required List<String> categories,
   }) async {
-    if (categories.isEmpty) {
+    final normalizedCategories = _normalizeCategories(categories);
+
+    if (normalizedCategories.isEmpty) {
       return;
     }
 
     final db = await database;
-    await db.insert(interactionsTable, {
+    final existingRows = await db.query(
+      interactionsTable,
+      columns: ['id'],
+      where: 'user_id = ? AND anime_id = ?',
+      whereArgs: [userId, animeId],
+      limit: 1,
+    );
+
+    final values = {
       'user_id': userId,
       'anime_id': animeId,
       'anime_title': animeTitle,
-      'categories': categories.join(', '),
+      'categories': normalizedCategories.join(', '),
       'created_at': DateTime.now().toIso8601String(),
-    });
+    };
+
+    if (existingRows.isEmpty) {
+      await db.insert(interactionsTable, values);
+      return;
+    }
+
+    await db.update(
+      interactionsTable,
+      values,
+      where: 'user_id = ? AND anime_id = ?',
+      whereArgs: [userId, animeId],
+    );
   }
 
   Future<Map<String, int>> getUserCategoryWeights(int userId) async {
@@ -156,10 +179,13 @@ class AppDatabase {
     final weights = <String, int>{};
 
     for (final row in rows) {
-      final rawCategories = (row['categories'] as String? ?? '')
-          .split(',')
-          .map((category) => category.trim().toLowerCase())
-          .where((category) => category.isNotEmpty);
+      final rawCategories = _normalizeCategories(
+        (row['categories'] as String? ?? '')
+            .split(',')
+            .map((category) => category.trim().toLowerCase())
+            .toList(),
+        lowerCase: true,
+      );
 
       for (final category in rawCategories) {
         weights[category] = (weights[category] ?? 0) + 1;
@@ -176,12 +202,17 @@ class AppDatabase {
 
   Future<void> saveActiveCategories(List<String> categories) async {
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setStringList(_activeCategoriesKey, categories);
+    await preferences.setStringList(
+      _activeCategoriesKey,
+      _normalizeCategories(categories),
+    );
   }
 
   Future<List<String>> getActiveCategories() async {
     final preferences = await SharedPreferences.getInstance();
-    return preferences.getStringList(_activeCategoriesKey) ?? <String>[];
+    return _normalizeCategories(
+      preferences.getStringList(_activeCategoriesKey) ?? <String>[],
+    );
   }
 
   Future<void> clearActiveCategories() async {
@@ -200,6 +231,38 @@ class AppDatabase {
       where: 'title = ?',
       whereArgs: [title],
     );
+  }
+
+  static List<String> _normalizeCategories(
+    List<String> categories, {
+    bool lowerCase = false,
+    int limit = _maxStoredCategories,
+  }) {
+    final normalizedCategories = <String>[];
+    final seenCategories = <String>{};
+
+    for (final category in categories) {
+      final trimmedCategory = category.trim();
+
+      if (trimmedCategory.isEmpty) {
+        continue;
+      }
+
+      final normalizedCategory = lowerCase
+          ? trimmedCategory.toLowerCase()
+          : trimmedCategory;
+      final categoryKey = normalizedCategory.toLowerCase();
+
+      if (seenCategories.add(categoryKey)) {
+        normalizedCategories.add(normalizedCategory);
+      }
+
+      if (normalizedCategories.length >= limit) {
+        break;
+      }
+    }
+
+    return normalizedCategories;
   }
 
   static final List<RecommendationAnime> _seedRecommendations = [
